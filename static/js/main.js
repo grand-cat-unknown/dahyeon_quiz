@@ -1,4 +1,8 @@
 // static/js/main.js
-
-// This file can contain shared JavaScript functions or event handlers
-// For simplicity, we've included the JavaScript code directly in the HTML templates
+// Adjust button sizing for touch interfaces
+if ('ontouchstart' in window) {
+    var buttons = document.getElementsByTagName('button');
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].style.minHeight = '44px';
+    }
+}
