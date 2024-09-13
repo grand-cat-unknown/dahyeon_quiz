@@ -91,16 +91,33 @@
                 location.reload();
             });
 
-            socket.on('new_question', function(data) {
+            function updateQuestion(data) {
                 $('#question-text').text(data.question_text);
                 $('#options-area').show();
                 $('#options-list').empty();
                 submittedOptionId = null;
                 data.options.forEach((option, index) => {
-                    const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
+                    const optionButton = $('<button></button>')
+                        .text(option)
+                        .addClass('option-button')
+                        .data('option-id', index);
                     $('#options-list').append($('<li></li>').append(optionButton));
                 });
                 $('#result-text').text('');
+            }
+
+            socket.on('new_question', function(data) {
+                updateQuestion(data);
+            });
+
+            socket.on('game_state', function(data) {
+                updateQuestion(data);
+                if (data.submitted_option_id !== null) {
+                    submittedOptionId = data.submitted_option_id;
+                    $('.option-button').prop('disabled', true);
+                    $('.option-button').eq(submittedOptionId).addClass('submitted selected');
+                    $('#result-text').text('Your answer has been submitted.');
+                }
             });
 
             $('#options-list').on('click', '.option-button', function() {
@@ -129,25 +146,6 @@
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
                 $('#options-area').hide();
-            });
-
-            socket.on('game_state', function(data) {
-                $('#question-text').text(data.question_text);
-                $('#options-area').show();
-                $('#options-list').empty();
-                data.options.forEach((option, index) => {
-                    const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
-                    if (index === submittedOptionId) {
-                        optionButton.addClass('submitted selected');
-                    }
-                    $('#options-list').append($('<li></li>').append(optionButton));
-                });
-                if (submittedOptionId !== null) {
-                    $('.option-button').prop('disabled', true);
-                    $('#result-text').text('Your answer has been submitted.');
-                } else {
-                    $('#result-text').text('');
-                }
             });
 
             socket.on('update_player_answers', function(data) {

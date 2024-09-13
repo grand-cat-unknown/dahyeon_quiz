@@ -151,10 +151,19 @@ def handle_get_game_state():
     current_question = QUESTIONS[game_state.current_question_index]
     question = Question.query.get(game_state.question_id)
 
+    player_id = request.sid  # Assuming you're using the session ID as the player ID
+    player = Player.query.filter_by(player_id=player_id).first()
+    submitted_option_id = None
+    if player and question:
+        player_answer = PlayerAnswer.query.filter_by(player_id=player.id, question_id=question.id).first()
+        if player_answer:
+            submitted_option_id = player_answer.option_id
+
     emit("game_state", {
         "question_text": current_question["text"],
         "options": current_question["options"],
-        "correct_option": game_state.correct_option
+        "correct_option": game_state.correct_option,
+        "submitted_option_id": submitted_option_id
     })
 
     if question:

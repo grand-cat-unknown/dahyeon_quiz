@@ -15,23 +15,12 @@
     <div id="options-area">
         <h2>Options:</h2>
         <ul id="options-list">
-            {% for option in options %}
-                <li>
-                    <button class="option-button" data-option-id="{{ loop.index0 }}">{{ option }}</button>
-                </li>
-            {% endfor %}
+            <!-- We'll populate this dynamically with JavaScript -->
         </ul>
     </div>
     <div id="answers-area">
         <h2>Submitted Answers:</h2>
-        <ul id="answers-list">
-            {% for answer in answers %}
-                <li>
-                    Answer {{ loop.index }}: {{ answer.answer_text }} ({{ answer.player_name }})
-                    <button onclick="selectCorrectAnswer({{ answer.answer_id }})">Select as Correct</button>
-                </li>
-            {% endfor %}
-        </ul>
+        <ul id="answers-list"></ul>
     </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -39,13 +28,29 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script type="text/javascript">
         $(document).ready(function() {
-            console.log('Document ready');
             const socket = io.connect();
             let currentQuestionText = "{{ current_question }}";
-            let answerCount = {{ answers|length }};
 
-            console.log('Initial answer count:', answerCount);
-            $('#refresh-time').text(new Date().toLocaleTimeString());
+            function updateQuestion(data) {
+                $('#question-text').text(data.question_text);
+                currentQuestionText = data.question_text;
+                
+                // Update options
+                $('#options-list').empty();
+                data.options.forEach((option, index) => {
+                    const optionButton = $('<button></button>')
+                        .text(option)
+                        .addClass('option-button')
+                        .data('option-id', index);
+                    $('#options-list').append($('<li></li>').append(optionButton));
+                });
+
+                // Reset option buttons
+                $('.option-button').prop('disabled', false).css('background-color', '');
+                
+                // Clear answers list
+                $('#answers-list').empty();
+            }
 
             function updateAnswersList(answers) {
                 $('#answers-list').empty();
@@ -62,10 +67,7 @@
 
             socket.on('game_state', function(data) {
                 console.log('Received game state:', data);
-                if (data.question_text !== currentQuestionText) {
-                    $('#question-text').text(data.question_text);
-                    currentQuestionText = data.question_text;
-                }
+                updateQuestion(data);
                 if (data.correct_option !== null) {
                     $('.option-button').prop('disabled', true);
                     $('.option-button').each(function() {
@@ -73,9 +75,6 @@
                             $(this).css('background-color', 'green');
                         }
                     });
-                } else {
-                    $('.option-button').prop('disabled', false);
-                    $('.option-button').css('background-color', '');
                 }
             });
 
@@ -85,39 +84,10 @@
 
             socket.on('new_question', function(data) {
                 console.log('New question received:', data);
-                $('#question-text').text(data.question_text);
-                currentQuestionText = data.question_text;
-                updateAnswersList([]);
+                updateQuestion(data);
             });
 
-            socket.on('new_answer', function(data) {
-                console.log('New answer received:', data);
-                answerCount++;
-                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text}`);
-                const selectButton = $('<button>Select as Correct</button>');
-                selectButton.on('click', function() {
-                    selectCorrectAnswer(data.answer_id);
-                });
-                answerItem.append(' ').append(selectButton);
-                $('#answers-list').append(answerItem);
-            });
-
-            socket.on('correct_answer_selected', function(data) {
-                console.log('Correct answer selected:', data);
-                $('#answers-list li').each(function() {
-                    if ($(this).text().includes(data.answer_text)) {
-                        $(this).css('color', 'green');
-                    }
-                });
-            });
-
-            socket.on('game_over', function() {
-                console.log('Game over');
-                $('#question-text').text('Game Over!');
-                $('#answers-list').empty();
-            });
-
-            $('.option-button').on('click', function() {
+            $(document).on('click', '.option-button', function() {
                 const optionId = $(this).data('option-id');
                 socket.emit('select_correct_option', {
                     'option_id': optionId
@@ -133,15 +103,14 @@
                     }
                 });
             });
-        });
 
-        function selectCorrectAnswer(answerId) {
-            console.log('Selecting correct answer:', answerId);
-            const socket = io.connect();
-            socket.emit('select_correct_answer', {
-                'answer_id': answerId
+            socket.on('game_over', function() {
+                console.log('Game over');
+                $('#question-text').text('Game Over!');
+                $('#options-list').empty();
+                $('#answers-list').empty();
             });
-        }
+        });
     </script>
 </body>
 </html>
