@@ -26,6 +26,20 @@
         <h2>Current Scores:</h2>
         <ul id="scores-list"></ul>
     </div>
+    <div id="players-area">
+        <h2>Registered Players:</h2>
+        <table id="players-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Player ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Player data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
@@ -36,6 +50,77 @@
 
             socket.on('connect', function() {
                 socket.emit('join', {room: 'admin'});
+            });
+
+            socket.on('new_question', function(data) {
+                $('#question-text').text(data.question_text);
+            });
+
+            $('#reset-game').on('click', function() {
+                $('#reset-confirmation').show();
+                $('#game-controls').hide();
+            });
+
+            $('#confirm-reset').on('click', function() {
+                socket.emit('reset_game');
+                $('#reset-confirmation').hide();
+                $('#game-controls').show();
+            });
+
+            $('#cancel-reset').on('click', function() {
+                $('#reset-confirmation').hide();
+                $('#game-controls').show();
+            });
+
+            $('#previous-question').on('click', function() {
+                socket.emit('previous_question');
+            });
+
+            $('#next-question').on('click', function() {
+                socket.emit('next_question');
+            });
+
+            socket.on('update_scores', function(data) {
+                updateScoresList(data);
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+            });
+
+            function updateScoresList(scores) {
+                const scoresList = $('#scores-list');
+                scoresList.empty();
+                scores.forEach(function(player) {
+                    scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
+                });
+            }
+
+            function updatePlayersList(players) {
+                const playersTableBody = $('#players-table tbody');
+                playersTableBody.empty();
+                players.forEach(function(player) {
+                    playersTableBody.append(
+                        $('<tr></tr>')
+                            .append($('<td></td>').text(player.name))
+                            .append($('<td></td>').text(player.player_id))
+                    );
+                });
+            }
+
+            // Initial scores update
+            $.get('/get_scores', function(data) {
+                updateScoresList(data);
+            });
+
+            // Initial players update
+            $.get('/get_players', function(data) {
+                updatePlayersList(data);
+            });
+
+            // Listen for player updates
+            socket.on('update_players', function(data) {
+                updatePlayersList(data);
             });
 
             socket.on('new_question', function(data) {

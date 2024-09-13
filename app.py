@@ -75,6 +75,13 @@ def register_player(data):
 
     emit("player_registered", {"name": name, "player_id": player_id})
 
+    # Send updated player list to admin
+    players = Player.query.all()
+    player_data = [
+        {"name": player.name, "player_id": player.player_id} for player in players
+    ]
+    emit("update_players", player_data, room="admin")
+
 
 @app.route("/birthday_girl")
 def birthday_girl_portal():
@@ -319,6 +326,15 @@ def get_scores():
     players = Player.query.order_by(Player.score.desc()).all()
     scores = [{"name": player.name, "score": player.score} for player in players]
     return jsonify(scores)
+
+
+@app.route("/get_players", methods=["GET"])
+def get_players():
+    players = Player.query.all()
+    player_data = [
+        {"name": player.name, "player_id": player.player_id} for player in players
+    ]
+    return jsonify(player_data)
 
 
 if __name__ == "__main__":
