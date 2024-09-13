@@ -30,6 +30,7 @@
                     <th>Name</th>
                     <th>Player ID</th>
                     <th>Score</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -101,8 +102,39 @@
                         $('<tr></tr>')
                             .append($('<td></td>').text(player.name))
                             .append($('<td></td>').text(player.player_id))
-                            .append($('<td></td>').text(player.score))
+                            .append($('<td></td>').html(`<input type="number" class="score-input" data-player-id="${player.player_id}" value="${player.score}">`))
+                            .append($('<td></td>').html(`<button class="update-score" data-player-id="${player.player_id}">Update</button>`))
                     );
+                });
+            }
+
+            // Event delegation for dynamically created update buttons
+            $('#players-table').on('click', '.update-score', function() {
+                const playerId = $(this).data('player-id');
+                const newScore = $(this).closest('tr').find('.score-input').val();
+                updatePlayerScore(playerId, newScore);
+            });
+
+            function updatePlayerScore(playerId, newScore) {
+                $.ajax({
+                    url: '/update_score',
+                    method: 'POST',
+                    data: JSON.stringify({ player_id: playerId, score: newScore }),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Score updated successfully');
+                            // Refresh the player list
+                            $.get('/get_players', function(data) {
+                                updatePlayersList(data);
+                            });
+                        } else {
+                            alert('Failed to update score');
+                        }
+                    },
+                    error: function() {
+                        alert('Error updating score');
+                    }
                 });
             }
 

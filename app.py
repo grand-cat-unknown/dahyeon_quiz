@@ -78,8 +78,7 @@ def register_player(data):
     # Send updated player list to admin
     players = Player.query.all()
     player_data = [
-        {"name": player.name, "player_id": player.player_id, "score": player.score}
-        for player in players
+        {"name": player.name, "player_id": player.player_id} for player in players
     ]
     emit("update_players", player_data, room="admin")
 
@@ -338,6 +337,26 @@ def get_players():
     ]
     return jsonify(player_data)
 
+
+@app.route("/update_score", methods=["POST"])
+def update_score():
+    data = request.json
+    player_id = data.get("player_id")
+    new_score = data.get("score")
+
+    player = Player.query.filter_by(player_id=player_id).first()
+    if player:
+        player.score = int(new_score)
+        db.session.commit()
+
+        # Emit updated scores to all clients
+        players = Player.query.order_by(Player.score.desc()).all()
+        scores = [{"name": p.name, "score": p.score} for p in players]
+        socketio.emit("update_scores", scores, namespace='/')  # Use namespace='/' for the default namespace
+
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False}), 404
 
 if __name__ == "__main__":
     with app.app_context():
