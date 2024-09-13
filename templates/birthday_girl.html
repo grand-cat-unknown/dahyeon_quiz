@@ -35,6 +35,7 @@
             });
 
             socket.on('new_answer', function(data) {
+                console.log('New answer received:', data);  // Add this line for debugging
                 const answerItem = $('<li></li>').text(data.player_name + ': ' + data.answer_text);
                 const selectButton = $('<button>Select as Correct</button>');
                 selectButton.on('click', function() {
@@ -44,6 +45,15 @@
                 });
                 answerItem.append(' ').append(selectButton);
                 $('#answers-list').append(answerItem);
+            });
+
+            socket.on('correct_answer_selected', function(data) {
+                // Highlight the correct answer or update the display as needed
+                $('#answers-list li').each(function() {
+                    if ($(this).text().startsWith(data.player_name)) {
+                        $(this).css('color', 'green');
+                    }
+                });
             });
 
             socket.on('game_over', function() {

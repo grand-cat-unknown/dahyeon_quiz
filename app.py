@@ -86,6 +86,7 @@ def on_join(data):
     print(f"Client joined room {room}")
 
 
+
 @socketio.on("submit_answer")
 def handle_submit_answer(data):
     player_name = data["player_name"]
@@ -125,7 +126,7 @@ def handle_submit_answer(data):
             "player_name": player.name,
             "answer_text": answer.text,
         },
-        room="birthday_girl",
+        broadcast=True,  # Changed from room="birthday_girl" to broadcast=True
     )
 
 
