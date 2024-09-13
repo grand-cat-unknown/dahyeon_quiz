@@ -8,7 +8,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 
-from models import Answer, CorrectAnswer, GameState, Player, Question, db
+from models import Answer, CorrectAnswer, GameState, Player, Question, db, PlayerAnswer
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "your_secret_key_here"  # Change this to a random secret key
@@ -70,10 +70,20 @@ def player_portal():
     if player_id:
         player = Player.query.filter_by(player_id=player_id).first()
         if player:
+            game_state = get_or_create_game_state()
+            current_question = Question.query.get(game_state.question_id)
+            player_answer = None
+            if current_question:
+                player_answer = PlayerAnswer.query.filter_by(
+                    player_id=player.id, question_id=current_question.id
+                ).first()
             return render_template(
-                "player.html", player_name=player.name, player_id=player_id
+                "player.html",
+                player_name=player.name,
+                player_id=player_id,
+                submitted_option_id=player_answer.option_id if player_answer else None
             )
-    return render_template("player.html", player_name=None, player_id=None)
+    return render_template("player.html", player_name=None, player_id=None, submitted_option_id=None)
 
 
 @socketio.on("register_player")
@@ -139,11 +149,16 @@ def handle_connect():
 def handle_get_game_state():
     game_state = get_or_create_game_state()
     current_question = QUESTIONS[game_state.current_question_index]
+    question = Question.query.get(game_state.question_id)
 
     emit("game_state", {
         "question_text": current_question["text"],
-        "options": current_question["options"]
+        "options": current_question["options"],
+        "correct_option": game_state.correct_option
     })
+
+    if question:
+        emit_player_answers(question.id)
 
 
 @socketio.on("disconnect")
@@ -218,6 +233,51 @@ def handle_submit_answer(data):
     )
 
 
+@socketio.on("player_select_option")
+def handle_player_select_option(data):
+    player_name = data["player_name"]
+    option_id = data["option_id"]
+    
+    player = Player.query.filter_by(name=player_name).first()
+    if not player:
+        print(f"Player not found: {player_name}")
+        return
+
+    game_state = get_or_create_game_state()
+    current_question = Question.query.get(game_state.question_id)
+
+    if not current_question:
+        # Create the question if it doesn't exist
+        current_question_data = QUESTIONS[game_state.current_question_index]
+        current_question = Question(text=current_question_data["text"])
+        db.session.add(current_question)
+        db.session.commit()
+        game_state.question_id = current_question.id
+        db.session.commit()
+
+    # Check if the player has already answered this question
+    existing_answer = PlayerAnswer.query.filter_by(
+        player_id=player.id, question_id=current_question.id
+    ).first()
+
+    if existing_answer:
+        # Update the existing answer
+        existing_answer.option_id = option_id
+    else:
+        # Create a new answer
+        new_answer = PlayerAnswer(
+            player_id=player.id,
+            question_id=current_question.id,
+            option_id=option_id
+        )
+        db.session.add(new_answer)
+
+    db.session.commit()
+
+    # Send updated answers to all clients
+    emit_player_answers(current_question.id)
+
+
 @socketio.on("select_correct_option")
 def handle_select_correct_option(data):
     option_id = data["option_id"]
@@ -227,26 +287,36 @@ def handle_select_correct_option(data):
 
     emit("correct_option_selected", {"option_id": option_id}, broadcast=True)
 
+    # Update player scores
+    update_player_scores(game_state.question_id, option_id)
 
-@socketio.on("player_select_option")
-def handle_player_select_option(data):
-    player_name = data["player_name"]
-    option_id = data["option_id"]
-    
-    player = Player.query.filter_by(name=player_name).first()
-    game_state = get_or_create_game_state()
 
-    if option_id == game_state.correct_option:
-        player.score += 1
-        db.session.commit()
-        emit("option_result", {"correct": True}, room=request.sid)
-    else:
-        emit("option_result", {"correct": False}, room=request.sid)
+def update_player_scores(question_id, correct_option_id):
+    correct_answers = PlayerAnswer.query.filter_by(
+        question_id=question_id, option_id=correct_option_id
+    ).all()
+
+    for answer in correct_answers:
+        answer.player.score += 1
+
+    db.session.commit()
 
     # Send updated scores to admin
     players = Player.query.order_by(Player.score.desc()).all()
     scores = [{"name": player.name, "score": player.score} for player in players]
     emit("update_scores", scores, room="admin")
+
+
+def emit_player_answers(question_id):
+    answers = PlayerAnswer.query.filter_by(question_id=question_id).all()
+    answer_data = [
+        {
+            "player_name": answer.player.name,
+            "option_id": answer.option_id
+        }
+        for answer in answers
+    ]
+    emit("update_player_answers", {"answers": answer_data}, broadcast=True)
 
 
 @socketio.on("start_game")
@@ -300,16 +370,27 @@ def handle_next_question():
     if game_state.current_question_index < len(QUESTIONS) - 1:
         game_state.current_question_index += 1
         game_state.correct_option = None
+        current_question_data = QUESTIONS[game_state.current_question_index]
+        
+        # Create or update the Question in the database
+        question = Question.query.filter_by(text=current_question_data["text"]).first()
+        if not question:
+            question = Question(text=current_question_data["text"])
+            db.session.add(question)
+            db.session.commit()
+        
+        game_state.question_id = question.id
         db.session.commit()
-        current_question = QUESTIONS[game_state.current_question_index]
+
         emit(
             "new_question",
             {
-                "question_text": current_question["text"],
-                "options": current_question["options"]
+                "question_text": current_question_data["text"],
+                "options": current_question_data["options"]
             },
             broadcast=True,
         )
+        emit_player_answers(question.id)
     else:
         emit("game_over", broadcast=True)
 

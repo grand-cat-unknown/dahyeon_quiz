@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .option-button.submitted {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .option-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <h1>Quiz Game - Player Portal</h1>
@@ -22,10 +32,6 @@
             <h2>Choose an option:</h2>
             <ul id="options-list"></ul>
         </div>
-        <div id="answer-area">
-            <input type="text" id="answer-text" placeholder="Your Answer">
-            <button id="submit-answer">Submit Answer</button>
-        </div>
         <div id="result-area">
             <h2 id="result-text"></h2>
         </div>
@@ -39,6 +45,7 @@
             const socket = io.connect();
             let playerName = '{{ player_name }}';
             let playerId = '{{ player_id }}';
+            let submittedOptionId = {{ submitted_option_id|default('null', true) }};
 
             function showGameArea(name) {
                 $('#registration-area').hide();
@@ -54,6 +61,7 @@
             if (playerName && playerId && playerName !== 'None' && playerId !== 'None') {
                 showGameArea(playerName);
                 socket.emit('join', {room: playerId});
+                socket.emit('get_game_state');
             } else {
                 showRegistrationArea();
             }
@@ -79,63 +87,74 @@
                 location.reload();
             });
 
-            $('#submit-answer').on('click', function() {
-                const answerText = $('#answer-text').val();
-                if (answerText) {
-                    socket.emit('submit_answer', {
+            socket.on('new_question', function(data) {
+                $('#question-text').text(data.question_text);
+                $('#options-area').show();
+                $('#options-list').empty();
+                submittedOptionId = null;
+                data.options.forEach((option, index) => {
+                    const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
+                    $('#options-list').append($('<li></li>').append(optionButton));
+                });
+                $('#result-text').text('');
+            });
+
+            $('#options-list').on('click', '.option-button', function() {
+                if (submittedOptionId === null) {
+                    const optionId = $(this).data('option-id');
+                    socket.emit('player_select_option', {
                         'player_name': playerName,
-                        'answer_text': answerText
+                        'option_id': optionId
                     });
-                    $('#answer-text').val('');
+                    submittedOptionId = optionId;
+                    $(this).addClass('submitted');
+                    $('.option-button').prop('disabled', true);
+                    $('#result-text').text('Your answer has been submitted.');
                 }
             });
 
-            socket.on('new_question', function(data) {
+            socket.on('correct_option_selected', function(data) {
+                $('.option-button').each(function() {
+                    if ($(this).data('option-id') === data.option_id) {
+                        $(this).css('background-color', '#4CAF50');
+                        $(this).css('color', 'white');
+                    }
+                });
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+                $('#options-area').hide();
+            });
+
+            socket.on('game_state', function(data) {
                 $('#question-text').text(data.question_text);
                 $('#options-area').show();
                 $('#options-list').empty();
                 data.options.forEach((option, index) => {
                     const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
+                    if (index === submittedOptionId) {
+                        optionButton.addClass('submitted').prop('disabled', true);
+                    }
                     $('#options-list').append($('<li></li>').append(optionButton));
                 });
+                if (submittedOptionId !== null) {
+                    $('.option-button').prop('disabled', true);
+                    $('#result-text').text('Your answer has been submitted.');
+                } else {
+                    $('#result-text').text('');
+                }
             });
 
-            $('#options-list').on('click', '.option-button', function() {
-                const optionId = $(this).data('option-id');
-                socket.emit('player_select_option', {
-                    'player_name': playerName,
-                    'option_id': optionId
+            socket.on('update_player_answers', function(data) {
+                data.answers.forEach(function(answer) {
+                    if (answer.player_name === playerName) {
+                        submittedOptionId = answer.option_id;
+                        $('.option-button').prop('disabled', true);
+                        $('.option-button').eq(submittedOptionId).addClass('submitted');
+                        $('#result-text').text('Your answer has been submitted.');
+                    }
                 });
-                $('.option-button').prop('disabled', true);
-            });
-
-            socket.on('option_result', function(data) {
-                if (data.correct) {
-                    $('#result-text').text('Correct! You got a point!');
-                } else {
-                    $('#result-text').text('Sorry, that was not the correct option.');
-                }
-            });
-
-            socket.on('answer_recorded', function(data) {
-                $('#result-text').text(data.message);
-            });
-
-            socket.on('answer_error', function(data) {
-                alert(data.message);
-            });
-
-            socket.on('correct_answer_selected', function(data) {
-                if (data.player_name === playerName) {
-                    $('#result-text').text('Correct! You got a point!');
-                } else {
-                    $('#result-text').text('Sorry, that was not the correct answer.');
-                }
-            });
-
-            socket.on('game_over', function() {
-                $('#question-text').text('Game Over!');
-                $('#answer-area').hide();
             });
         });
     </script>

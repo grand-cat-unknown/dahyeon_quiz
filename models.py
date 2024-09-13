@@ -13,6 +13,7 @@ class Player(db.Model):
     name = db.Column(db.String(100), nullable=False)
     score = db.Column(db.Integer, default=0)
     answers = db.relationship("Answer", backref="player", lazy=True)
+    player_answers = db.relationship("PlayerAnswer", back_populates="player", lazy=True)
 
 
 class Question(db.Model):
@@ -25,6 +26,7 @@ class Question(db.Model):
     correct_answer = db.relationship(
         "CorrectAnswer", backref="question", lazy=True, uselist=False
     )
+    player_answers = db.relationship("PlayerAnswer", back_populates="question", lazy=True)
 
 
 class Answer(db.Model):
@@ -47,3 +49,17 @@ class GameState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     current_question_index = db.Column(db.Integer, default=0)
     correct_option = db.Column(db.Integer, nullable=True)
+    question_id = db.Column(db.Integer, db.ForeignKey("question.id"), nullable=True)
+
+    question = db.relationship("Question", backref="game_state")
+
+class PlayerAnswer(db.Model):
+    __tablename__ = "player_answer"
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey("question.id"), nullable=False)
+    option_id = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    player = db.relationship("Player", back_populates="player_answers")
+    question = db.relationship("Question", back_populates="player_answers")

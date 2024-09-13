@@ -50,15 +50,9 @@
             function updateAnswersList(answers) {
                 $('#answers-list').empty();
                 answers.forEach((answer, index) => {
-                    const answerItem = $('<li></li>').text(`Answer ${index + 1}: ${answer.answer_text} (${answer.player_name})`);
-                    const selectButton = $('<button>Select as Correct</button>');
-                    selectButton.on('click', function() {
-                        selectCorrectAnswer(answer.answer_id);
-                    });
-                    answerItem.append(' ').append(selectButton);
+                    const answerItem = $('<li></li>').text(`${answer.player_name}: Option ${answer.option_id + 1}`);
                     $('#answers-list').append(answerItem);
                 });
-                answerCount = answers.length;
             }
 
             socket.on('connect', function() {
@@ -72,6 +66,20 @@
                     $('#question-text').text(data.question_text);
                     currentQuestionText = data.question_text;
                 }
+                if (data.correct_option !== null) {
+                    $('.option-button').prop('disabled', true);
+                    $('.option-button').each(function() {
+                        if ($(this).data('option-id') === data.correct_option) {
+                            $(this).css('background-color', 'green');
+                        }
+                    });
+                } else {
+                    $('.option-button').prop('disabled', false);
+                    $('.option-button').css('background-color', '');
+                }
+            });
+
+            socket.on('update_player_answers', function(data) {
                 updateAnswersList(data.answers);
             });
 
