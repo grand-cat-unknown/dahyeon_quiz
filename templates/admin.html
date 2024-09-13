@@ -16,12 +16,20 @@
     <div id="question-area">
         <h2 id="question-text">Current Question</h2>
     </div>
+    <div id="scores-area">
+        <h2>Current Scores:</h2>
+        <ul id="scores-list"></ul>
+    </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function() {
             const socket = io.connect();
+
+            socket.on('connect', function() {
+                socket.emit('join', {room: 'admin'});
+            });
 
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
@@ -39,8 +47,25 @@
                 socket.emit('next_question');
             });
 
+            socket.on('update_scores', function(data) {
+                updateScoresList(data);
+            });
+
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
+            });
+
+            function updateScoresList(scores) {
+                const scoresList = $('#scores-list');
+                scoresList.empty();
+                scores.forEach(function(player) {
+                    scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
+                });
+            }
+
+            // Initial scores update
+            $.get('/get_scores', function(data) {
+                updateScoresList(data);
             });
         });
     </script>

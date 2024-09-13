@@ -14,10 +14,6 @@
     <div id="correct-answer-area">
         <h2 id="correct-answer-text"></h2>
     </div>
-    <div id="scores-area">
-        <h2>Scores:</h2>
-        <ul id="scores-list"></ul>
-    </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
@@ -31,24 +27,12 @@
             });
 
             socket.on('correct_answer_selected', function(data) {
-                $('#correct-answer-text').text('Correct Answer: ' + data.answer_text + ' (by ' + data.player_name + ')');
-                updateScores();
+                $('#correct-answer-text').text('Correct Answer: ' + data.answer_text);
             });
 
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
-                updateScores();
             });
-
-            function updateScores() {
-                $.get('/get_scores', function(data) {
-                    const scoresList = $('#scores-list');
-                    scoresList.empty();
-                    data.forEach(function(player) {
-                        scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
-                    });
-                });
-            }
         });
     </script>
 </body>

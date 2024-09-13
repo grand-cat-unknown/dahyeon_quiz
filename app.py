@@ -156,6 +156,11 @@ def handle_select_correct_answer(data):
         broadcast=True,
     )
 
+    # Send updated scores to admin
+    players = Player.query.order_by(Player.score.desc()).all()
+    scores = [{"name": player.name, "score": player.score} for player in players]
+    emit("update_scores", scores, room="admin")
+
     # Move to the next question
     game_state = get_or_create_game_state()
     game_state.current_question_index += 1
@@ -182,6 +187,11 @@ def handle_reset_game():
     Player.query.update({Player.score: 0})
     db.session.commit()
     emit("new_question", {"question_text": QUESTIONS[0]}, broadcast=True)
+
+    # Send updated scores to admin after reset
+    players = Player.query.order_by(Player.score.desc()).all()
+    scores = [{"name": player.name, "score": player.score} for player in players]
+    emit("update_scores", scores, room="admin")
 
 
 @socketio.on("next_question")
