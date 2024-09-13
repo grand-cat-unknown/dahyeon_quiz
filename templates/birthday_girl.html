@@ -81,7 +81,7 @@
             socket.on('new_answer', function(data) {
                 console.log('New answer received:', data);
                 answerCount++;
-                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text} (${data.player_name})`);
+                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text}`);
                 const selectButton = $('<button>Select as Correct</button>');
                 selectButton.on('click', function() {
                     selectCorrectAnswer(data.answer_id);
