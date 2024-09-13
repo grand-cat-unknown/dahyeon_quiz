@@ -57,25 +57,15 @@ def birthday_girl_portal():
     current_question_index = game_state.current_question_index
     current_question_text = QUESTIONS[current_question_index]
 
-    print(f"Current question index: {current_question_index}")
-    print(f"Current question text: {current_question_text}")
-
     current_question = Question.query.filter_by(text=current_question_text).first()
 
     answers = []
     if current_question:
-        print(f"Found question in database: {current_question.text}")
         answers = Answer.query.filter_by(question_id=current_question.id).all()
         answers = [
             {"answer_id": a.id, "player_name": a.player.name, "answer_text": a.text}
             for a in answers
         ]
-        print(f"Found {len(answers)} answers for this question")
-    else:
-        print("Current question not found in database")
-
-    for answer in answers:
-        print(f"Answer: {answer['player_name']} - {answer['answer_text']}")
 
     return render_template(
         "birthday_girl.html",
@@ -109,8 +99,17 @@ def handle_connect():
 def handle_get_game_state():
     game_state = get_or_create_game_state()
     current_question_text = QUESTIONS[game_state.current_question_index]
-    emit("game_state", {"question_text": current_question_text})
+    current_question = Question.query.filter_by(text=current_question_text).first()
 
+    answers = []
+    if current_question:
+        answers = Answer.query.filter_by(question_id=current_question.id).all()
+        answers = [
+            {"answer_id": a.id, "player_name": a.player.name, "answer_text": a.text}
+            for a in answers
+        ]
+
+    emit("game_state", {"question_text": current_question_text, "answers": answers})
 
 @socketio.on("disconnect")
 def handle_disconnect():

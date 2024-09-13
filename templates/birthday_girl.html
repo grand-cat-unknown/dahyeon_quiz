@@ -43,29 +43,39 @@
             console.log('Initial answer count:', answerCount);
             $('#refresh-time').text(new Date().toLocaleTimeString());
 
+            function updateAnswersList(answers) {
+                $('#answers-list').empty();
+                answers.forEach((answer, index) => {
+                    const answerItem = $('<li></li>').text(`Answer ${index + 1}: ${answer.answer_text} (${answer.player_name})`);
+                    const selectButton = $('<button>Select as Correct</button>');
+                    selectButton.on('click', function() {
+                        selectCorrectAnswer(answer.answer_id);
+                    });
+                    answerItem.append(' ').append(selectButton);
+                    $('#answers-list').append(answerItem);
+                });
+                answerCount = answers.length;
+            }
+
             socket.on('connect', function() {
                 console.log('Connected to server');
-                // Emit event to get current game state
                 socket.emit('get_game_state');
             });
 
             socket.on('game_state', function(data) {
                 console.log('Received game state:', data);
                 if (data.question_text !== currentQuestionText) {
-                    // Update only if the question has changed
                     $('#question-text').text(data.question_text);
-                    $('#answers-list').empty();
-                    answerCount = 0;
                     currentQuestionText = data.question_text;
                 }
+                updateAnswersList(data.answers);
             });
 
             socket.on('new_question', function(data) {
                 console.log('New question received:', data);
                 $('#question-text').text(data.question_text);
-                $('#answers-list').empty();
-                answerCount = 0;
                 currentQuestionText = data.question_text;
+                updateAnswersList([]);
             });
 
             socket.on('new_answer', function(data) {
