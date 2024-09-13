@@ -9,16 +9,22 @@
 </head>
 <body>
     <h1>Quiz Game - Player Portal</h1>
-    <div id="question-area">
-        <h2 id="question-text">Waiting for the game to start...</h2>
-    </div>
-    <div id="answer-area">
+    <div id="registration-area">
         <input type="text" id="player-name" placeholder="Your Name">
-        <input type="text" id="answer-text" placeholder="Your Answer">
-        <button id="submit-answer">Submit Answer</button>
+        <button id="register-player">Register</button>
     </div>
-    <div id="result-area">
-        <h2 id="result-text"></h2>
+    <div id="game-area" style="display: none;">
+        <h2>Welcome, <span id="player-name-display"></span>!</h2>
+        <div id="question-area">
+            <h2 id="question-text">Waiting for the game to start...</h2>
+        </div>
+        <div id="answer-area">
+            <input type="text" id="answer-text" placeholder="Your Answer">
+            <button id="submit-answer">Submit Answer</button>
+        </div>
+        <div id="result-area">
+            <h2 id="result-text"></h2>
+        </div>
     </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -27,11 +33,55 @@
     <script type="text/javascript">
         $(document).ready(function() {
             const socket = io.connect();
-            let playerName = '';
+            let playerName = localStorage.getItem('playerName') || "{{ player_name }}";
+
+            function showGameArea(name) {
+                $('#registration-area').hide();
+                $('#game-area').show();
+                $('#player-name-display').text(name);
+            }
+
+            function showRegistrationArea() {
+                $('#registration-area').show();
+                $('#game-area').hide();
+            }
+
+            if (playerName && playerName !== "None") {
+                showGameArea(playerName);
+            } else {
+                showRegistrationArea();
+            }
+
+            $('#register-player').on('click', function() {
+                playerName = $('#player-name').val().trim();
+                if (playerName) {
+                    socket.emit('register_player', { name: playerName });
+                }
+            });
+
+            socket.on('player_registered', function(data) {
+                localStorage.setItem('playerName', data.name);
+                showGameArea(data.name);
+            });
+
+            socket.on('game_reset', function() {
+                localStorage.removeItem('playerName');
+                location.reload();
+            });
+
+            $('#submit-answer').on('click', function() {
+                const answerText = $('#answer-text').val();
+                if (answerText) {
+                    socket.emit('submit_answer', {
+                        'player_name': playerName,
+                        'answer_text': answerText
+                    });
+                    $('#answer-text').val('');
+                }
+            });
 
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
-                $('#answer-text').val('');
                 $('#result-text').text('');
             });
 
@@ -46,23 +96,6 @@
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
                 $('#answer-area').hide();
-            });
-
-            $('#submit-answer').on('click', function() {
-                playerName = $('#player-name').val();
-                const answerText = $('#answer-text').val();
-
-                if (!playerName || !answerText) {
-                    alert('Please enter your name and answer.');
-                    return;
-                }
-
-                socket.emit('submit_answer', {
-                    'player_name': playerName,
-                    'answer_text': answerText
-                });
-
-                $('#answer-text').val('');
             });
         });
     </script>

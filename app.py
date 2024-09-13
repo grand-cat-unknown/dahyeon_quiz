@@ -2,14 +2,14 @@
 
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 
 from models import Answer, CorrectAnswer, GameState, Player, Question, db
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "12345"
+app.config["SECRET_KEY"] = "your_secret_key_here"  # Change this to a random secret key
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///quiz.db"
 db.init_app(app)
 
@@ -47,8 +47,9 @@ def index():
 
 @app.route("/player")
 def player_portal():
-    return render_template("player.html")
-
+    ip_address = request.remote_addr
+    player = Player.query.filter_by(ip_address=ip_address).first()
+    return render_template("player.html", player_name=player.name if player else None)
 
 @app.route("/birthday_girl")
 def birthday_girl_portal():
@@ -85,6 +86,20 @@ def on_join(data):
     join_room(room)
     print(f"Client joined room {room}")
 
+@socketio.on("register_player")
+def register_player(data):
+    name = data["name"]
+    ip_address = request.remote_addr
+
+    existing_player = Player.query.filter_by(ip_address=ip_address).first()
+    if existing_player:
+        existing_player.name = name
+    else:
+        new_player = Player(name=name, ip_address=ip_address)
+        db.session.add(new_player)
+
+    db.session.commit()
+    emit("player_registered", {"name": name})
 
 @socketio.on("submit_answer")
 def handle_submit_answer(data):
@@ -93,9 +108,8 @@ def handle_submit_answer(data):
 
     player = Player.query.filter_by(name=player_name).first()
     if not player:
-        player = Player(name=player_name)
-        db.session.add(player)
-        db.session.commit()
+        print(f"Player not found: {player_name}")  # Debug print
+        return  # Player not found, ignore the answer
 
     game_state = get_or_create_game_state()
     question = Question.query.filter_by(
@@ -118,6 +132,8 @@ def handle_submit_answer(data):
     db.session.add(answer)
     db.session.commit()
 
+    print(f"New answer submitted: {player_name} - {answer_text}")  # Debug print
+
     emit(
         "new_answer",
         {
@@ -127,8 +143,6 @@ def handle_submit_answer(data):
         },
         broadcast=True,
     )
-
-
 @socketio.on("select_correct_answer")
 def handle_select_correct_answer(data):
     answer_id = data["answer_id"]
@@ -193,7 +207,12 @@ def handle_reset_game():
     db.session.add(game_state)
     db.session.commit()
 
+    # Clear all player data
+    Player.query.delete()
+    db.session.commit()
+
     emit("new_question", {"question_text": QUESTIONS[0]}, broadcast=True)
+    emit("game_reset", broadcast=True)
 
     # Send empty scores to admin after reset
     emit("update_scores", [], room="admin")

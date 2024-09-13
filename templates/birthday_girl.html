@@ -25,14 +25,19 @@
             const socket = io.connect();
             let answerCount = 0;
 
+            socket.on('connect', function() {
+                console.log('Connected to server');
+            });
+
             socket.on('new_question', function(data) {
+                console.log('New question received:', data);
                 $('#question-text').text(data.question_text);
                 $('#answers-list').empty();
                 answerCount = 0;
             });
 
             socket.on('new_answer', function(data) {
-                console.log('New answer received:', data);  // Keep this line for debugging
+                console.log('New answer received:', data);
                 answerCount++;
                 const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text}`);
                 const selectButton = $('<button>Select as Correct</button>');
@@ -46,7 +51,7 @@
             });
 
             socket.on('correct_answer_selected', function(data) {
-                // Highlight the correct answer without showing the player name
+                console.log('Correct answer selected:', data);
                 $('#answers-list li').each(function() {
                     if ($(this).text().includes(data.answer_text)) {
                         $(this).css('color', 'green');
@@ -55,6 +60,7 @@
             });
 
             socket.on('game_over', function() {
+                console.log('Game over');
                 $('#question-text').text('Game Over!');
                 $('#answers-list').empty();
             });
