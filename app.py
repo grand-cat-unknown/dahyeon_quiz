@@ -53,8 +53,39 @@ def player_portal():
 
 @app.route("/birthday_girl")
 def birthday_girl_portal():
-    return render_template("birthday_girl.html")
+    game_state = get_or_create_game_state()
+    current_question_index = game_state.current_question_index
+    current_question_text = QUESTIONS[current_question_index]
 
+    print(f"Current question index: {current_question_index}")
+    print(f"Current question text: {current_question_text}")
+
+    current_question = Question.query.filter_by(text=current_question_text).first()
+
+    answers = []
+    if current_question:
+        print(f"Found question in database: {current_question.text}")
+        answers = Answer.query.filter_by(question_id=current_question.id).all()
+        answers = [
+            {"answer_id": a.id, "player_name": a.player.name, "answer_text": a.text}
+            for a in answers
+        ]
+        print(f"Found {len(answers)} answers for this question")
+    else:
+        print("Current question not found in database")
+
+    for answer in answers:
+        print(f"Answer: {answer['player_name']} - {answer['answer_text']}")
+
+    return render_template(
+        "birthday_girl.html",
+        current_question=current_question_text,
+        answers=answers,
+        debug_info={
+            "question_index": current_question_index,
+            "answers_count": len(answers),
+        },
+    )
 
 @app.route("/tv")
 def tv_display():
@@ -73,6 +104,12 @@ def handle_connect():
     emit(
         "new_question", {"question_text": QUESTIONS[game_state.current_question_index]}
     )
+
+@socketio.on("get_game_state")
+def handle_get_game_state():
+    game_state = get_or_create_game_state()
+    current_question_text = QUESTIONS[game_state.current_question_index]
+    emit("game_state", {"question_text": current_question_text})
 
 
 @socketio.on("disconnect")
@@ -108,20 +145,30 @@ def handle_submit_answer(data):
 
     player = Player.query.filter_by(name=player_name).first()
     if not player:
-        print(f"Player not found: {player_name}")  # Debug print
-        return  # Player not found, ignore the answer
+        print(f"Player not found: {player_name}")
+        return
 
     game_state = get_or_create_game_state()
-    question = Question.query.filter_by(
-        text=QUESTIONS[game_state.current_question_index]
-    ).first()
+    current_question_text = QUESTIONS[game_state.current_question_index]
+    question = Question.query.filter_by(text=current_question_text).first()
     if not question:
-        question = Question(
-            text=QUESTIONS[game_state.current_question_index],
-            timestamp=datetime.utcnow(),
-        )
+        question = Question(text=current_question_text, timestamp=datetime.utcnow())
         db.session.add(question)
         db.session.commit()
+        print(f"Created new question: {question.text}")
+
+    # Check if player has already answered this question
+    existing_answer = Answer.query.filter_by(
+        player_id=player.id, question_id=question.id
+    ).first()
+    if existing_answer:
+        print(f"Player {player_name} has already answered this question")
+        emit(
+            "answer_error",
+            {"message": "You have already answered this question"},
+            room=request.sid,
+        )
+        return
 
     answer = Answer(
         player_id=player.id,
@@ -132,7 +179,7 @@ def handle_submit_answer(data):
     db.session.add(answer)
     db.session.commit()
 
-    print(f"New answer submitted: {player_name} - {answer_text}")  # Debug print
+    print(f"New answer submitted: {player_name} - {answer_text}")
 
     emit(
         "new_answer",
@@ -143,6 +190,15 @@ def handle_submit_answer(data):
         },
         broadcast=True,
     )
+
+    # Confirm to the player that their answer was recorded
+    emit(
+        "answer_recorded",
+        {"message": "Your answer has been recorded"},
+        room=request.sid,
+    )
+
+
 @socketio.on("select_correct_answer")
 def handle_select_correct_answer(data):
     answer_id = data["answer_id"]

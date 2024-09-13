@@ -34,6 +34,7 @@
         $(document).ready(function() {
             const socket = io.connect();
             let playerName = localStorage.getItem('playerName') || "{{ player_name }}";
+            let hasAnsweredCurrentQuestion = false;
 
             function showGameArea(name) {
                 $('#registration-area').hide();
@@ -70,6 +71,10 @@
             });
 
             $('#submit-answer').on('click', function() {
+                if (hasAnsweredCurrentQuestion) {
+                    alert("You have already answered this question.");
+                    return;
+                }
                 const answerText = $('#answer-text').val();
                 if (answerText) {
                     socket.emit('submit_answer', {
@@ -83,6 +88,18 @@
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
                 $('#result-text').text('');
+                hasAnsweredCurrentQuestion = false;
+                $('#submit-answer').prop('disabled', false);
+            });
+
+            socket.on('answer_recorded', function(data) {
+                $('#result-text').text(data.message);
+                hasAnsweredCurrentQuestion = true;
+                $('#submit-answer').prop('disabled', true);
+            });
+
+            socket.on('answer_error', function(data) {
+                alert(data.message);
             });
 
             socket.on('correct_answer_selected', function(data) {

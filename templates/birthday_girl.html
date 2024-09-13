@@ -10,11 +10,24 @@
 <body>
     <h1>Quiz Game - Birthday Girl's Portal</h1>
     <div id="question-area">
-        <h2 id="question-text">Waiting for the game to start...</h2>
+        <h2 id="question-text">{{ current_question }}</h2>
     </div>
     <div id="answers-area">
         <h2>Submitted Answers:</h2>
-        <ul id="answers-list"></ul>
+        <ul id="answers-list">
+            {% for answer in answers %}
+                <li>
+                    Answer {{ loop.index }}: {{ answer.answer_text }} ({{ answer.player_name }})
+                    <button onclick="selectCorrectAnswer({{ answer.answer_id }})">Select as Correct</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="debug-info">
+        <h3>Debug Info:</h3>
+        <p>Question Index: {{ debug_info.question_index }}</p>
+        <p>Answers Count: {{ debug_info.answers_count }}</p>
+        <p>Last Refresh: <span id="refresh-time"></span></p>
     </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -22,11 +35,29 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script type="text/javascript">
         $(document).ready(function() {
+            console.log('Document ready');
             const socket = io.connect();
-            let answerCount = 0;
+            let currentQuestionText = "{{ current_question }}";
+            let answerCount = {{ answers|length }};
+
+            console.log('Initial answer count:', answerCount);
+            $('#refresh-time').text(new Date().toLocaleTimeString());
 
             socket.on('connect', function() {
                 console.log('Connected to server');
+                // Emit event to get current game state
+                socket.emit('get_game_state');
+            });
+
+            socket.on('game_state', function(data) {
+                console.log('Received game state:', data);
+                if (data.question_text !== currentQuestionText) {
+                    // Update only if the question has changed
+                    $('#question-text').text(data.question_text);
+                    $('#answers-list').empty();
+                    answerCount = 0;
+                    currentQuestionText = data.question_text;
+                }
             });
 
             socket.on('new_question', function(data) {
@@ -34,17 +65,16 @@
                 $('#question-text').text(data.question_text);
                 $('#answers-list').empty();
                 answerCount = 0;
+                currentQuestionText = data.question_text;
             });
 
             socket.on('new_answer', function(data) {
                 console.log('New answer received:', data);
                 answerCount++;
-                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text}`);
+                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text} (${data.player_name})`);
                 const selectButton = $('<button>Select as Correct</button>');
                 selectButton.on('click', function() {
-                    socket.emit('select_correct_answer', {
-                        'answer_id': data.answer_id
-                    });
+                    selectCorrectAnswer(data.answer_id);
                 });
                 answerItem.append(' ').append(selectButton);
                 $('#answers-list').append(answerItem);
@@ -65,6 +95,14 @@
                 $('#answers-list').empty();
             });
         });
+
+        function selectCorrectAnswer(answerId) {
+            console.log('Selecting correct answer:', answerId);
+            const socket = io.connect();
+            socket.emit('select_correct_answer', {
+                'answer_id': answerId
+            });
+        }
     </script>
 </body>
 </html>
