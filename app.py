@@ -78,7 +78,8 @@ def register_player(data):
     # Send updated player list to admin
     players = Player.query.all()
     player_data = [
-        {"name": player.name, "player_id": player.player_id} for player in players
+        {"name": player.name, "player_id": player.player_id, "score": player.score}
+        for player in players
     ]
     emit("update_players", player_data, room="admin")
 
@@ -332,7 +333,8 @@ def get_scores():
 def get_players():
     players = Player.query.all()
     player_data = [
-        {"name": player.name, "player_id": player.player_id} for player in players
+        {"name": player.name, "player_id": player.player_id, "score": player.score}
+        for player in players
     ]
     return jsonify(player_data)
 
