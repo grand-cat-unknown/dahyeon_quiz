@@ -86,7 +86,6 @@ def on_join(data):
     print(f"Client joined room {room}")
 
 
-
 @socketio.on("submit_answer")
 def handle_submit_answer(data):
     player_name = data["player_name"]
@@ -126,7 +125,7 @@ def handle_submit_answer(data):
             "player_name": player.name,
             "answer_text": answer.text,
         },
-        broadcast=True,  # Changed from room="birthday_girl" to broadcast=True
+        broadcast=True,
     )
 
 
@@ -183,15 +182,23 @@ def handle_start_game():
 
 @socketio.on("reset_game")
 def handle_reset_game():
-    update_game_state(0)
-    Player.query.update({Player.score: 0})
+    # Drop all tables
+    db.drop_all()
+
+    # Recreate all tables
+    db.create_all()
+
+    # Reinitialize game state
+    game_state = GameState(current_question_index=0)
+    db.session.add(game_state)
     db.session.commit()
+
     emit("new_question", {"question_text": QUESTIONS[0]}, broadcast=True)
 
-    # Send updated scores to admin after reset
-    players = Player.query.order_by(Player.score.desc()).all()
-    scores = [{"name": player.name, "score": player.score} for player in players]
-    emit("update_scores", scores, room="admin")
+    # Send empty scores to admin after reset
+    emit("update_scores", [], room="admin")
+
+    print("Game reset: Database cleared and reinitialized")
 
 
 @socketio.on("next_question")
