@@ -27,6 +27,7 @@
         <table id="players-table">
             <thead>
                 <tr>
+                    <th>Rank</th>
                     <th>Name</th>
                     <th>Player ID</th>
                     <th>Score</th>
@@ -97,9 +98,14 @@
             function updatePlayersList(players) {
                 const playersTableBody = $('#players-table tbody');
                 playersTableBody.empty();
-                players.forEach(function(player) {
+                
+                // Sort players by score in descending order
+                players.sort((a, b) => b.score - a.score);
+                
+                players.forEach(function(player, index) {
                     playersTableBody.append(
                         $('<tr></tr>')
+                            .append($('<td></td>').text(index + 1))  // Rank
                             .append($('<td></td>').text(player.name))
                             .append($('<td></td>').text(player.player_id))
                             .append($('<td></td>').html(`<input type="number" class="score-input" data-player-id="${player.player_id}" value="${player.score}">`))
