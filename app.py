@@ -1,8 +1,10 @@
 # app.py
 
+import random
+import string
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 
@@ -24,6 +26,8 @@ QUESTIONS = [
     "What is the chemical symbol for gold?",
 ]
 
+def generate_player_id():
+    return "".join(random.choices(string.ascii_uppercase, k=4))
 
 def get_or_create_game_state():
     game_state = GameState.query.first()
@@ -47,9 +51,37 @@ def index():
 
 @app.route("/player")
 def player_portal():
+    player_id = request.args.get("player_id")
+    if player_id:
+        player = Player.query.filter_by(player_id=player_id).first()
+        if player:
+            return render_template(
+                "player.html", player_name=player.name, player_id=player_id
+            )
+    return render_template("player.html", player_name=None, player_id=None)
+
+
+@socketio.on("register_player")
+def register_player(data):
+    name = data["name"]
     ip_address = request.remote_addr
-    player = Player.query.filter_by(ip_address=ip_address).first()
-    return render_template("player.html", player_name=player.name if player else None)
+
+    # Generate a unique player ID
+    player_id = 1
+    while Player.query.filter_by(id=player_id).first():
+        player_id += 1
+
+    existing_player = Player.query.filter_by(ip_address=ip_address).first()
+    if existing_player:
+        existing_player.name = name
+        existing_player.id = player_id
+    else:
+        new_player = Player(id=player_id, name=name, ip_address=ip_address)
+        db.session.add(new_player)
+
+    db.session.commit()
+    emit("player_registered", {"name": name, "player_id": player_id})
+
 
 @app.route("/birthday_girl")
 def birthday_girl_portal():
@@ -77,6 +109,7 @@ def birthday_girl_portal():
         },
     )
 
+
 @app.route("/tv")
 def tv_display():
     return render_template("tv_display.html")
@@ -95,6 +128,7 @@ def handle_connect():
         "new_question", {"question_text": QUESTIONS[game_state.current_question_index]}
     )
 
+
 @socketio.on("get_game_state")
 def handle_get_game_state():
     game_state = get_or_create_game_state()
@@ -111,6 +145,7 @@ def handle_get_game_state():
 
     emit("game_state", {"question_text": current_question_text, "answers": answers})
 
+
 @socketio.on("disconnect")
 def handle_disconnect():
     print("Client disconnected")
@@ -122,20 +157,6 @@ def on_join(data):
     join_room(room)
     print(f"Client joined room {room}")
 
-@socketio.on("register_player")
-def register_player(data):
-    name = data["name"]
-    ip_address = request.remote_addr
-
-    existing_player = Player.query.filter_by(ip_address=ip_address).first()
-    if existing_player:
-        existing_player.name = name
-    else:
-        new_player = Player(name=name, ip_address=ip_address)
-        db.session.add(new_player)
-
-    db.session.commit()
-    emit("player_registered", {"name": name})
 
 @socketio.on("submit_answer")
 def handle_submit_answer(data):
@@ -154,7 +175,6 @@ def handle_submit_answer(data):
         question = Question(text=current_question_text, timestamp=datetime.utcnow())
         db.session.add(question)
         db.session.commit()
-        print(f"Created new question: {question.text}")
 
     # Check if player has already answered this question
     existing_answer = Answer.query.filter_by(

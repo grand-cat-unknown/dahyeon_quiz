@@ -43,8 +43,6 @@ class CorrectAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_id = db.Column(db.Integer, db.ForeignKey("question.id"), nullable=False)
     answer_id = db.Column(db.Integer, db.ForeignKey("answer.id"), nullable=False)
-    player_id = db.Column(db.Integer, db.ForeignKey("player.id"), nullable=False)
-
 
 class GameState(db.Model):
     __tablename__ = "game_state"

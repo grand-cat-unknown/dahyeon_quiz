@@ -33,8 +33,8 @@
     <script type="text/javascript">
         $(document).ready(function() {
             const socket = io.connect();
-            let playerName = localStorage.getItem('playerName') || "{{ player_name }}";
-            let hasAnsweredCurrentQuestion = false;
+            let playerName = localStorage.getItem('playerName');
+            let playerId = localStorage.getItem('playerId');
 
             function showGameArea(name) {
                 $('#registration-area').hide();
@@ -47,7 +47,7 @@
                 $('#game-area').hide();
             }
 
-            if (playerName && playerName !== "None") {
+            if (playerName && playerId) {
                 showGameArea(playerName);
             } else {
                 showRegistrationArea();
@@ -62,19 +62,17 @@
 
             socket.on('player_registered', function(data) {
                 localStorage.setItem('playerName', data.name);
+                localStorage.setItem('playerId', data.player_id);
                 showGameArea(data.name);
             });
 
             socket.on('game_reset', function() {
                 localStorage.removeItem('playerName');
+                localStorage.removeItem('playerId');
                 location.reload();
             });
 
             $('#submit-answer').on('click', function() {
-                if (hasAnsweredCurrentQuestion) {
-                    alert("You have already answered this question.");
-                    return;
-                }
                 const answerText = $('#answer-text').val();
                 if (answerText) {
                     socket.emit('submit_answer', {
@@ -88,14 +86,10 @@
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
                 $('#result-text').text('');
-                hasAnsweredCurrentQuestion = false;
-                $('#submit-answer').prop('disabled', false);
             });
 
             socket.on('answer_recorded', function(data) {
                 $('#result-text').text(data.message);
-                hasAnsweredCurrentQuestion = true;
-                $('#submit-answer').prop('disabled', true);
             });
 
             socket.on('answer_error', function(data) {
