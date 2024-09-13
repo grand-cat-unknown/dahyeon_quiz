@@ -24,6 +24,7 @@
     <script type="text/javascript">
         $(document).ready(function() {
             const socket = io.connect();
+            let answerCount = 0;
 
             $('#start-game').on('click', function() {
                 socket.emit('start_game');
@@ -32,11 +33,13 @@
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
                 $('#answers-list').empty();
+                answerCount = 0;
             });
 
             socket.on('new_answer', function(data) {
-                console.log('New answer received:', data);  // Add this line for debugging
-                const answerItem = $('<li></li>').text(data.player_name + ': ' + data.answer_text);
+                console.log('New answer received:', data);  // Keep this line for debugging
+                answerCount++;
+                const answerItem = $('<li></li>').text(`Answer ${answerCount}: ${data.answer_text}`);
                 const selectButton = $('<button>Select as Correct</button>');
                 selectButton.on('click', function() {
                     socket.emit('select_correct_answer', {
@@ -48,9 +51,9 @@
             });
 
             socket.on('correct_answer_selected', function(data) {
-                // Highlight the correct answer or update the display as needed
+                // Highlight the correct answer without showing the player name
                 $('#answers-list li').each(function() {
-                    if ($(this).text().startsWith(data.player_name)) {
+                    if ($(this).text().includes(data.answer_text)) {
                         $(this).css('color', 'green');
                     }
                 });
