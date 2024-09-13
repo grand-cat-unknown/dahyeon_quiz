@@ -46,3 +46,4 @@ class GameState(db.Model):
     __tablename__ = "game_state"
     id = db.Column(db.Integer, primary_key=True)
     current_question_index = db.Column(db.Integer, default=0)
+    correct_option = db.Column(db.Integer, nullable=True)

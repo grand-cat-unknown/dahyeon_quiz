@@ -18,6 +18,10 @@
         <div id="question-area">
             <h2 id="question-text">Waiting for the game to start...</h2>
         </div>
+        <div id="options-area" style="display: none;">
+            <h2>Choose an option:</h2>
+            <ul id="options-list"></ul>
+        </div>
         <div id="answer-area">
             <input type="text" id="answer-text" placeholder="Your Answer">
             <button id="submit-answer">Submit Answer</button>
@@ -88,7 +92,29 @@
 
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
-                $('#result-text').text('');
+                $('#options-area').show();
+                $('#options-list').empty();
+                data.options.forEach((option, index) => {
+                    const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
+                    $('#options-list').append($('<li></li>').append(optionButton));
+                });
+            });
+
+            $('#options-list').on('click', '.option-button', function() {
+                const optionId = $(this).data('option-id');
+                socket.emit('player_select_option', {
+                    'player_name': playerName,
+                    'option_id': optionId
+                });
+                $('.option-button').prop('disabled', true);
+            });
+
+            socket.on('option_result', function(data) {
+                if (data.correct) {
+                    $('#result-text').text('Correct! You got a point!');
+                } else {
+                    $('#result-text').text('Sorry, that was not the correct option.');
+                }
             });
 
             socket.on('answer_recorded', function(data) {

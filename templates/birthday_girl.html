@@ -12,6 +12,16 @@
     <div id="question-area">
         <h2 id="question-text">{{ current_question }}</h2>
     </div>
+    <div id="options-area">
+        <h2>Options:</h2>
+        <ul id="options-list">
+            {% for option in options %}
+                <li>
+                    <button class="option-button" data-option-id="{{ loop.index0 }}">{{ option }}</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
     <div id="answers-area">
         <h2>Submitted Answers:</h2>
         <ul id="answers-list">
@@ -97,6 +107,23 @@
                 console.log('Game over');
                 $('#question-text').text('Game Over!');
                 $('#answers-list').empty();
+            });
+
+            $('.option-button').on('click', function() {
+                const optionId = $(this).data('option-id');
+                socket.emit('select_correct_option', {
+                    'option_id': optionId
+                });
+                $('.option-button').prop('disabled', true);
+            });
+
+            socket.on('correct_option_selected', function(data) {
+                console.log('Correct option selected:', data);
+                $('.option-button').each(function() {
+                    if ($(this).data('option-id') === data.option_id) {
+                        $(this).css('background-color', 'green');
+                    }
+                });
             });
         });
 
