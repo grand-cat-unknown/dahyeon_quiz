@@ -1,0 +1,48 @@
+<!-- templates/admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Quiz Game - Admin Portal</h1>
+    <div id="game-controls">
+        <button id="reset-game">Reset Game</button>
+        <button id="previous-question">Previous Question</button>
+        <button id="next-question">Next Question</button>
+    </div>
+    <div id="question-area">
+        <h2 id="question-text">Current Question</h2>
+    </div>
+
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            const socket = io.connect();
+
+            socket.on('new_question', function(data) {
+                $('#question-text').text(data.question_text);
+            });
+
+            $('#reset-game').on('click', function() {
+                socket.emit('reset_game');
+            });
+
+            $('#previous-question').on('click', function() {
+                socket.emit('previous_question');
+            });
+
+            $('#next-question').on('click', function() {
+                socket.emit('next_question');
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+            });
+        });
+    </script>
+</body>
+</html>

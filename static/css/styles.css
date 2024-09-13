@@ -1,0 +1,35 @@
+
+/* static/css/styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+#question-area, #answer-area, #answers-area, #correct-answer-area {
+    margin-top: 20px;
+}
+
+input[type="text"] {
+    padding: 8px;
+    margin: 5px 0;
+    width: 300px;
+}
+
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    margin-bottom: 10px;
+}

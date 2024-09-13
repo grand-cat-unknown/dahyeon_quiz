@@ -1,0 +1,68 @@
+<!-- templates/player.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Quiz Game - Player Portal</h1>
+    <div id="question-area">
+        <h2 id="question-text">Waiting for the game to start...</h2>
+    </div>
+    <div id="answer-area">
+        <input type="text" id="player-name" placeholder="Your Name">
+        <input type="text" id="answer-text" placeholder="Your Answer">
+        <button id="submit-answer">Submit Answer</button>
+    </div>
+    <div id="result-area">
+        <h2 id="result-text"></h2>
+    </div>
+
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            const socket = io.connect();
+            let playerName = '';
+
+            socket.on('new_question', function(data) {
+                $('#question-text').text(data.question_text);
+                $('#answer-text').val('');
+                $('#result-text').text('');
+            });
+
+            socket.on('correct_answer_selected', function(data) {
+                if (data.player_name === playerName) {
+                    $('#result-text').text('Correct! You got a point!');
+                } else {
+                    $('#result-text').text('Sorry, that was not the correct answer.');
+                }
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+                $('#answer-area').hide();
+            });
+
+            $('#submit-answer').on('click', function() {
+                playerName = $('#player-name').val();
+                const answerText = $('#answer-text').val();
+
+                if (!playerName || !answerText) {
+                    alert('Please enter your name and answer.');
+                    return;
+                }
+
+                socket.emit('submit_answer', {
+                    'player_name': playerName,
+                    'answer_text': answerText
+                });
+
+                $('#answer-text').val('');
+            });
+        });
+    </script>
+</body>
+</html>

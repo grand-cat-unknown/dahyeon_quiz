@@ -1,0 +1,55 @@
+<!-- templates/tv_display.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TV Display</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Quiz Game - TV Display</h1>
+    <div id="question-area">
+        <h2 id="question-text">Waiting for the game to start...</h2>
+    </div>
+    <div id="correct-answer-area">
+        <h2 id="correct-answer-text"></h2>
+    </div>
+    <div id="scores-area">
+        <h2>Scores:</h2>
+        <ul id="scores-list"></ul>
+    </div>
+
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            const socket = io.connect();
+
+            socket.on('new_question', function(data) {
+                $('#question-text').text('Question: ' + data.question_text);
+                $('#correct-answer-text').text('');
+            });
+
+            socket.on('correct_answer_selected', function(data) {
+                $('#correct-answer-text').text('Correct Answer: ' + data.answer_text + ' (by ' + data.player_name + ')');
+                updateScores();
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+                updateScores();
+            });
+
+            function updateScores() {
+                $.get('/get_scores', function(data) {
+                    const scoresList = $('#scores-list');
+                    scoresList.empty();
+                    data.forEach(function(player) {
+                        scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

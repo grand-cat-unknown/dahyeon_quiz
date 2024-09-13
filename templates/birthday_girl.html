@@ -1,0 +1,63 @@
+<!-- templates/birthday_girl.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Birthday Girl's Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Quiz Game - Birthday Girl's Portal</h1>
+    <div id="game-controls">
+        <button id="start-game">Start Game</button>
+    </div>
+    <div id="question-area">
+        <h2 id="question-text">Press 'Start Game' to begin</h2>
+    </div>
+    <div id="answers-area">
+        <h2>Submitted Answers:</h2>
+        <ul id="answers-list"></ul>
+    </div>
+
+    <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            const socket = io.connect();
+
+            $('#start-game').on('click', function() {
+                socket.emit('start_game');
+            });
+
+            socket.on('new_question', function(data) {
+                $('#question-text').text(data.question_text);
+                $('#answers-list').empty();
+            });
+
+            socket.on('new_answer', function(data) {
+                const answerItem = $('<li></li>').text(data.player_name + ': ' + data.answer_text);
+                const selectButton = $('<button>Select as Correct</button>');
+                selectButton.on('click', function() {
+                    socket.emit('select_correct_answer', {
+                        'answer_id': data.answer_id
+                    });
+                });
+                answerItem.append(' ').append(selectButton);
+                $('#answers-list').append(answerItem);
+            });
+
+            socket.on('game_over', function() {
+                $('#question-text').text('Game Over!');
+                $('#answers-list').empty();
+                $.get('/get_scores', function(data) {
+                    const scoresList = $('<ul></ul>');
+                    data.forEach(function(player) {
+                        scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
+                    });
+                    $('#answers-area').append('<h2>Final Scores:</h2>').append(scoresList);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
