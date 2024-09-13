@@ -64,22 +64,15 @@ def player_portal():
 @socketio.on("register_player")
 def register_player(data):
     name = data["name"]
-    ip_address = request.remote_addr
+    player_id = generate_player_id()
 
-    # Generate a unique player ID
-    player_id = 1
-    while Player.query.filter_by(id=player_id).first():
-        player_id += 1
+    while Player.query.filter_by(player_id=player_id).first():
+        player_id = generate_player_id()
 
-    existing_player = Player.query.filter_by(ip_address=ip_address).first()
-    if existing_player:
-        existing_player.name = name
-        existing_player.id = player_id
-    else:
-        new_player = Player(id=player_id, name=name, ip_address=ip_address)
-        db.session.add(new_player)
-
+    new_player = Player(player_id=player_id, name=name)
+    db.session.add(new_player)
     db.session.commit()
+
     emit("player_registered", {"name": name, "player_id": player_id})
 
 
