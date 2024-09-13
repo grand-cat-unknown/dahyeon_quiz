@@ -15,6 +15,10 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+        .option-button.selected {
+            background-color: #008CBA;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -107,7 +111,7 @@
                         'option_id': optionId
                     });
                     submittedOptionId = optionId;
-                    $(this).addClass('submitted');
+                    $(this).addClass('submitted selected');
                     $('.option-button').prop('disabled', true);
                     $('#result-text').text('Your answer has been submitted.');
                 }
@@ -134,7 +138,7 @@
                 data.options.forEach((option, index) => {
                     const optionButton = $('<button></button>').text(option).addClass('option-button').data('option-id', index);
                     if (index === submittedOptionId) {
-                        optionButton.addClass('submitted').prop('disabled', true);
+                        optionButton.addClass('submitted selected');
                     }
                     $('#options-list').append($('<li></li>').append(optionButton));
                 });
@@ -151,7 +155,7 @@
                     if (answer.player_name === playerName) {
                         submittedOptionId = answer.option_id;
                         $('.option-button').prop('disabled', true);
-                        $('.option-button').eq(submittedOptionId).addClass('submitted');
+                        $('.option-button').eq(submittedOptionId).addClass('submitted selected');
                         $('#result-text').text('Your answer has been submitted.');
                     }
                 });
