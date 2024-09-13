@@ -18,10 +18,6 @@
             <!-- We'll populate this dynamically with JavaScript -->
         </ul>
     </div>
-    <div id="answers-area">
-        <h2>Submitted Answers:</h2>
-        <ul id="answers-list"></ul>
-    </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
@@ -47,9 +43,6 @@
 
                 // Reset option buttons
                 $('.option-button').prop('disabled', false).css('background-color', '');
-                
-                // Clear answers list
-                $('#answers-list').empty();
             }
 
             function updateAnswersList(answers) {
@@ -79,7 +72,8 @@
             });
 
             socket.on('update_player_answers', function(data) {
-                updateAnswersList(data.answers);
+                // This function is no longer needed, but we'll keep it empty
+                // in case it's called from the server
             });
 
             socket.on('new_question', function(data) {
