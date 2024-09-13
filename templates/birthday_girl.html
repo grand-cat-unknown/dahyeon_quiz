@@ -8,11 +8,8 @@
 </head>
 <body>
     <h1>Quiz Game - Birthday Girl's Portal</h1>
-    <div id="game-controls">
-        <button id="start-game">Start Game</button>
-    </div>
     <div id="question-area">
-        <h2 id="question-text">Press 'Start Game' to begin</h2>
+        <h2 id="question-text">Waiting for the game to start...</h2>
     </div>
     <div id="answers-area">
         <h2>Submitted Answers:</h2>
@@ -25,10 +22,6 @@
         $(document).ready(function() {
             const socket = io.connect();
             let answerCount = 0;
-
-            $('#start-game').on('click', function() {
-                socket.emit('start_game');
-            });
 
             socket.on('new_question', function(data) {
                 $('#question-text').text(data.question_text);
@@ -62,13 +55,6 @@
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
                 $('#answers-list').empty();
-                $.get('/get_scores', function(data) {
-                    const scoresList = $('<ul></ul>');
-                    data.forEach(function(player) {
-                        scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
-                    });
-                    $('#answers-area').append('<h2>Final Scores:</h2>').append(scoresList);
-                });
             });
         });
     </script>

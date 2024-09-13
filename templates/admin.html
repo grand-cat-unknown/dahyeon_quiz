@@ -13,6 +13,11 @@
         <button id="previous-question">Previous Question</button>
         <button id="next-question">Next Question</button>
     </div>
+    <div id="reset-confirmation" style="display: none;">
+        <p>Are you sure you want to reset the game? This will clear all data.</p>
+        <button id="confirm-reset">Yes, Reset Game</button>
+        <button id="cancel-reset">Cancel</button>
+    </div>
     <div id="question-area">
         <h2 id="question-text">Current Question</h2>
     </div>
@@ -36,7 +41,19 @@
             });
 
             $('#reset-game').on('click', function() {
+                $('#reset-confirmation').show();
+                $('#game-controls').hide();
+            });
+
+            $('#confirm-reset').on('click', function() {
                 socket.emit('reset_game');
+                $('#reset-confirmation').hide();
+                $('#game-controls').show();
+            });
+
+            $('#cancel-reset').on('click', function() {
+                $('#reset-confirmation').hide();
+                $('#game-controls').show();
             });
 
             $('#previous-question').on('click', function() {
