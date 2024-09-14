@@ -85,8 +85,6 @@
                 $('#options-area').show();
                 $('#options-list').empty();
                 submittedOptionId = null;
-                $('.option-button').removeClass('submitted selected');
-                $('.option-button').prop('disabled', false);
                 data.options.forEach((option, index) => {
                     const optionButton = $('<button></button>')
                         .text(option)
