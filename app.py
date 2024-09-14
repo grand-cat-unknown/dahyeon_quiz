@@ -20,114 +20,69 @@ socketio = SocketIO(app, async_mode="eventlet")
 # Predefined questions
 QUESTIONS = [
     {
-        "text": "What is Dahyeon's go-to comfort food when she needs cheering up?",
+        "text": "When is Dahyeon's birthday?",
+        "options": ["14th Sep", "16th Sep", "18th Sep", "20th Sep"],
+    },
+    {
+        "text": "What's her favorite coffee place?",
+        "options": ["Starbucks", "Local cafe", "Home-brewed", "Costa Coffee"],
+    },
+    {
+        "text": "How much would she rate Interstellar?",
+        "options": ["7", "8", "9", "10"],
+    },
+    {
+        "text": "What's her go-to phrase?",
+        "options": ["That's interesting!", "Oh my gosh!", "Let's do this!", "Really?"],
+    },
+    {
+        "text": "Describe her safe place",
         "options": [
-            "Chocolate ice cream",
-            "Homemade mac and cheese",
-            "Pizza with extra cheese",
-            "Her mom's special cookies",
+            "In a new country's beach",
+            "Home",
+            "A cozy bookstore",
+            "A quiet park",
         ],
     },
     {
-        "text": "Which of these activities always puts a smile on Dahyeon's face?",
+        "text": "How many countries did she visit from 2015 - 2020?",
+        "options": ["5", "8", "12", "15"],
+    },
+    {
+        "text": "What's her ideal way to destress?",
+        "options": ["Cooking", "Massage", "Sleeping", "Spending time with friends"],
+    },
+    {
+        "text": "What is her favourite childhood toy?",
+        "options": ["Teddy bear", "Lego set", "Barbie doll", "Nintendo GameBoy"],
+    },
+    {
+        "text": "What is her love language?",
         "options": [
-            "Dancing to her favorite songs",
-            "Watching funny cat videos",
-            "Going for a nature walk",
-            "Painting or drawing",
+            "Words of affirmation",
+            "Acts of service",
+            "Quality time",
+            "Physical touch",
         ],
     },
     {
-        "text": "What's Dahyeon's most cherished childhood memory?",
-        "options": [
-            "Family camping trips",
-            "Learning to ride a bike",
-            "Her first pet",
-            "Winning a school talent show",
-        ],
+        "text": "Her favourite board game?",
+        "options": ["Monopoly", "Scrabble", "Catan", "Ticket to Ride"],
     },
     {
-        "text": "If Dahyeon could have any superpower, which would she choose?",
-        "options": [
-            "The ability to fly",
-            "Teleportation",
-            "Mind reading",
-            "Healing powers",
-        ],
+        "text": "How many BBQ ribs can she eat?",
+        "options": ["Half a rack", "Full rack", "Two racks", "Three racks"],
     },
     {
-        "text": "What's Dahyeon's dream vacation destination?",
-        "options": [
-            "A cozy cabin in the mountains",
-            "A tropical beach paradise",
-            "An exciting city adventure",
-            "A wildlife safari",
-        ],
+        "text": "Which country was she in before she moved to Belgium?",
+        "options": ["USA", "UK", "South Korea", "Canada"],
     },
     {
-        "text": "Which of these traits do Dahyeon's friends admire most about her?",
-        "options": [
-            "Her kindness and empathy",
-            "Her sense of humor",
-            "Her creativity",
-            "Her determination",
-        ],
-    },
-    {
-        "text": "What's Dahyeon's favorite way to unwind after a long day?",
-        "options": [
-            "Taking a bubble bath",
-            "Reading a good book",
-            "Calling a close friend",
-            "Listening to calming music",
-        ],
-    },
-    {
-        "text": "If Dahyeon could master any skill instantly, what would it be?",
-        "options": [
-            "Playing a musical instrument",
-            "Speaking multiple languages",
-            "Gourmet cooking",
-            "Professional photography",
-        ],
-    },
-    {
-        "text": "What's Dahyeon's most prized possession?",
-        "options": [
-            "A family heirloom",
-            "A gift from a best friend",
-            "Her favorite childhood toy",
-            "A souvenir from a special trip",
-        ],
-    },
-    {
-        "text": "Which of these quotes resonates most with Dahyeon's outlook on life?",
-        "options": [
-            "Be the change you wish to see in the world",
-            "Live, laugh, love",
-            "Every cloud has a silver lining",
-            "Adventure is out there",
-        ],
-    },
-    {
-        "text": "What's Dahyeon's secret talent that not many people know about?",
-        "options": [
-            "Juggling",
-            "Doing impressions",
-            "Writing poetry",
-            "Solving Rubik's cubes",
-        ],
-    },
-    {
-        "text": "If Dahyeon could have dinner with any person, living or dead, who would she choose?",
-        "options": [
-            "Her grandmother",
-            "A favorite author",
-            "A historical figure she admires",
-            "Her childhood hero",
-        ],
+        "text": "Age difference between her and her sister",
+        "options": ["1 year", "2 years", "3 years", "4 years"],
     },
 ]
+
 
 def generate_player_id():
     return "".join(random.choices(string.ascii_uppercase, k=4))
