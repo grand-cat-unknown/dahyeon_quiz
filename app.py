@@ -8,7 +8,7 @@ from flask import Flask, jsonify, redirect, render_template, request, session, u
 from flask_socketio import SocketIO, emit, join_room
 from flask_sqlalchemy import SQLAlchemy
 
-from models import Answer, CorrectAnswer, GameState, Player, Question, db, PlayerAnswer
+from models import Answer, CorrectAnswer, GameState, Player, PlayerAnswer, Question, db
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "your_secret_key_here"  # Change this to a random secret key
@@ -20,24 +20,112 @@ socketio = SocketIO(app, async_mode="eventlet")
 # Predefined questions
 QUESTIONS = [
     {
-        "text": "What is the capital of France?",
-        "options": ["London", "Berlin", "Paris", "Madrid"]
+        "text": "What is Dahyeon's go-to comfort food when she needs cheering up?",
+        "options": [
+            "Chocolate ice cream",
+            "Homemade mac and cheese",
+            "Pizza with extra cheese",
+            "Her mom's special cookies",
+        ],
     },
     {
-        "text": "Who painted the Mona Lisa?",
-        "options": ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Claude Monet"]
+        "text": "Which of these activities always puts a smile on Dahyeon's face?",
+        "options": [
+            "Dancing to her favorite songs",
+            "Watching funny cat videos",
+            "Going for a nature walk",
+            "Painting or drawing",
+        ],
     },
     {
-        "text": "What is the largest planet in our solar system?",
-        "options": ["Earth", "Jupiter", "Saturn", "Mars"]
+        "text": "What's Dahyeon's most cherished childhood memory?",
+        "options": [
+            "Family camping trips",
+            "Learning to ride a bike",
+            "Her first pet",
+            "Winning a school talent show",
+        ],
     },
     {
-        "text": "In which year did World War II end?",
-        "options": ["1943", "1945", "1947", "1950"]
+        "text": "If Dahyeon could have any superpower, which would she choose?",
+        "options": [
+            "The ability to fly",
+            "Teleportation",
+            "Mind reading",
+            "Healing powers",
+        ],
     },
     {
-        "text": "What is the chemical symbol for gold?",
-        "options": ["Au", "Ag", "Fe", "Cu"]
+        "text": "What's Dahyeon's dream vacation destination?",
+        "options": [
+            "A cozy cabin in the mountains",
+            "A tropical beach paradise",
+            "An exciting city adventure",
+            "A wildlife safari",
+        ],
+    },
+    {
+        "text": "Which of these traits do Dahyeon's friends admire most about her?",
+        "options": [
+            "Her kindness and empathy",
+            "Her sense of humor",
+            "Her creativity",
+            "Her determination",
+        ],
+    },
+    {
+        "text": "What's Dahyeon's favorite way to unwind after a long day?",
+        "options": [
+            "Taking a bubble bath",
+            "Reading a good book",
+            "Calling a close friend",
+            "Listening to calming music",
+        ],
+    },
+    {
+        "text": "If Dahyeon could master any skill instantly, what would it be?",
+        "options": [
+            "Playing a musical instrument",
+            "Speaking multiple languages",
+            "Gourmet cooking",
+            "Professional photography",
+        ],
+    },
+    {
+        "text": "What's Dahyeon's most prized possession?",
+        "options": [
+            "A family heirloom",
+            "A gift from a best friend",
+            "Her favorite childhood toy",
+            "A souvenir from a special trip",
+        ],
+    },
+    {
+        "text": "Which of these quotes resonates most with Dahyeon's outlook on life?",
+        "options": [
+            "Be the change you wish to see in the world",
+            "Live, laugh, love",
+            "Every cloud has a silver lining",
+            "Adventure is out there",
+        ],
+    },
+    {
+        "text": "What's Dahyeon's secret talent that not many people know about?",
+        "options": [
+            "Juggling",
+            "Doing impressions",
+            "Writing poetry",
+            "Solving Rubik's cubes",
+        ],
+    },
+    {
+        "text": "If Dahyeon could have dinner with any person, living or dead, who would she choose?",
+        "options": [
+            "Her grandmother",
+            "A favorite author",
+            "A historical figure she admires",
+            "Her childhood hero",
+        ],
     },
 ]
 
