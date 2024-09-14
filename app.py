@@ -505,7 +505,9 @@ def handle_next_question():
         )
         emit_player_answers(question.id)
     else:
-        emit("game_over", broadcast=True)
+        # Find the winner
+        winner = Player.query.order_by(Player.score.desc()).first()
+        emit("game_over", {"winner": winner.name}, broadcast=True)
 
 
 @socketio.on("previous_question")

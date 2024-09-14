@@ -144,8 +144,8 @@
                 const playerData = data.find(player => player.name === playerName);
             });
 
-            socket.on('game_over', function() {
-                $('#question-text').text('Game Over!');
+            socket.on('game_over', function(data) {
+                $('#question-text').text(`The winner is: ${data.winner}`);
                 $('#options-area').hide();
             });
 
