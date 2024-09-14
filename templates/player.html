@@ -34,8 +34,8 @@
     <script type="text/javascript">
         $(document).ready(function() {
             const socket = io.connect();
-            let playerName = '{{ player_name }}';
-            let playerId = '{{ player_id }}';
+            let playerName = '{{ player_name }}' !== 'None' ? '{{ player_name }}' : '';
+            let playerId = '{{ player_id }}' !== 'None' ? '{{ player_id }}' : '';
             let submittedOptionId = {{ submitted_option_id|default('null', true) }};
 
             function showGameArea(name) {
@@ -73,6 +73,8 @@
             });
 
             socket.on('game_reset', function() {
+                localStorage.removeItem('playerName');
+                localStorage.removeItem('playerId');
                 location.reload();
             });
 
@@ -105,27 +107,39 @@
                 }
             });
 
+            socket.on('correct_option_selected', function(data) {
+                // Do nothing when the correct option is selected
+                // This ensures that players don't see any indication of the correct answer
+            });
+
             $('#options-list').on('click', '.option-button', function() {
                 if (submittedOptionId === null) {
                     const optionId = $(this).data('option-id');
-                    socket.emit('player_select_option', {
-                        'player_name': playerName,
-                        'option_id': optionId
-                    });
                     submittedOptionId = optionId;
                     $(this).addClass('submitted selected');
                     $('.option-button').prop('disabled', true);
                     $('#result-text').text('Your answer has been submitted.');
+
+                    socket.emit('player_select_option', {
+                        'player_name': playerName,
+                        'option_id': optionId
+                    });
                 }
             });
 
-            socket.on('correct_option_selected', function(data) {
-                $('.option-button').each(function() {
-                    if ($(this).data('option-id') === data.option_id) {
-                        $(this).css('background-color', '#4CAF50');
-                        $(this).css('color', 'white');
-                    }
-                });
+            socket.on('update_scores', function(data) {
+                // Update the player's score if it's in the data
+                const playerScore = data.find(score => score.name === playerName);
+                if (playerScore) {
+                    $('#result-text').text(`Your score: ${playerScore.score}`);
+                }
+            });
+
+            socket.on('update_players', function(data) {
+                const playerData = data.find(player => player.name === playerName);
+                if (playerData) {
+                    $('#result-text').text(`Your score: ${playerData.score}`);
+                }
             });
 
             socket.on('game_over', function() {

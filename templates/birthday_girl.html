@@ -95,9 +95,11 @@
                 console.log('Correct option selected:', data);
                 $('.option-button').each(function() {
                     if ($(this).data('option-id') === data.option_id) {
-                        $(this).css('background-color', 'green');
+                        $(this).css('background-color', '#4CAF50');
+                        $(this).css('color', 'white');
                     }
                 });
+                $('.option-button').prop('disabled', true);
             });
 
             socket.on('game_over', function() {

@@ -288,17 +288,27 @@ def handle_player_select_option(data):
 
     db.session.commit()
 
+    # Check if this answer is correct and update the score
+    if game_state.correct_option is not None and option_id == game_state.correct_option:
+        player.score += 1
+        db.session.commit()
+
     # Send updated player list to all clients
     players = Player.query.all()
     player_data = [
         {
             "name": player.name,
             "player_id": player.player_id,
-            "answered": PlayerAnswer.query.filter_by(player_id=player.id, question_id=current_question.id).first() is not None
+            "answered": PlayerAnswer.query.filter_by(player_id=player.id, question_id=current_question.id).first() is not None,
+            "score": player.score
         }
         for player in players
     ]
     emit("update_players", player_data, broadcast=True)
+
+    # Send updated scores to all clients
+    scores = [{"name": p.name, "score": p.score} for p in Player.query.all()]
+    emit("update_scores", scores, broadcast=True)
 
     # Send updated answers to all clients
     emit_player_answers(current_question.id)
