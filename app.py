@@ -100,12 +100,17 @@ def register_player(data):
 
     emit("player_registered", {"name": name, "player_id": player_id})
 
-    # Send updated player list to admin
+    # Send updated player list to all clients
     players = Player.query.all()
     player_data = [
-        {"name": player.name, "player_id": player.player_id} for player in players
+        {
+            "name": player.name,
+            "player_id": player.player_id,
+            "answered": PlayerAnswer.query.filter_by(player_id=player.id, question_id=get_or_create_game_state().question_id).first() is not None
+        }
+        for player in players
     ]
-    emit("update_players", player_data, room="admin")
+    emit("update_players", player_data, broadcast=True)
 
 
 @app.route("/birthday_girl")
@@ -283,6 +288,18 @@ def handle_player_select_option(data):
 
     db.session.commit()
 
+    # Send updated player list to all clients
+    players = Player.query.all()
+    player_data = [
+        {
+            "name": player.name,
+            "player_id": player.player_id,
+            "answered": PlayerAnswer.query.filter_by(player_id=player.id, question_id=current_question.id).first() is not None
+        }
+        for player in players
+    ]
+    emit("update_players", player_data, broadcast=True)
+
     # Send updated answers to all clients
     emit_player_answers(current_question.id)
 
@@ -457,6 +474,19 @@ def update_score():
         return jsonify({"success": True})
     else:
         return jsonify({"success": False}), 404
+
+@socketio.on('get_players')
+def handle_get_players():
+    players = Player.query.all()
+    player_data = [
+        {
+            "name": player.name,
+            "player_id": player.player_id,
+            "answered": PlayerAnswer.query.filter_by(player_id=player.id, question_id=get_or_create_game_state().question_id).first() is not None
+        }
+        for player in players
+    ]
+    emit('update_players', player_data)
 
 if __name__ == "__main__":
     with app.app_context():

@@ -6,6 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TV Display</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .player-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .player {
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .answered {
+            background-color: #90EE90; /* Light green */
+        }
+        .not-answered {
+            background-color: #FFA500; /* Orange */
+        }
+    </style>
 </head>
 <body>
     <h1>Quiz Game - TV Display</h1>
@@ -15,6 +34,10 @@
     <div id="correct-answer-area">
         <h2 id="correct-answer-text"></h2>
     </div>
+    <div id="player-area">
+        <h3>Players:</h3>
+        <div id="player-list" class="player-list"></div>
+    </div>
 
     <script src="//code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.min.js"></script>
@@ -23,9 +46,27 @@
         $(document).ready(function() {
             const socket = io.connect();
 
+            function updatePlayerList(players) {
+                const playerList = $('#player-list');
+                playerList.empty();
+                players.forEach(player => {
+                    const playerElement = $('<div>')
+                        .addClass('player')
+                        .addClass(player.answered ? 'answered' : 'not-answered')
+                        .text(player.name);
+                    playerList.append(playerElement);
+                });
+            }
+
+            socket.on('connect', function() {
+                console.log('Connected to server');
+                socket.emit('get_players');
+            });
+
             socket.on('new_question', function(data) {
                 $('#question-text').text('Question: ' + data.question_text);
                 $('#correct-answer-text').text('');
+                socket.emit('get_players');
             });
 
             socket.on('correct_answer_selected', function(data) {
@@ -35,6 +76,17 @@
             socket.on('game_over', function() {
                 $('#question-text').text('Game Over!');
             });
+
+            socket.on('update_players', function(data) {
+                updatePlayerList(data);
+            });
+
+            socket.on('player_answered', function(data) {
+                updatePlayerList(data.players);
+            });
+
+            // Initial player list update
+            socket.emit('get_players');
         });
     </script>
 </body>
