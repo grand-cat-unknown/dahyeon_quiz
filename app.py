@@ -24,12 +24,8 @@ QUESTIONS = [
         "options": ["14th Sep", "16th Sep", "18th Sep", "20th Sep"],
     },
     {
-        "text": "Share a positive experience you had with Dahyeon",
-        "options": [],  # Empty options for bonus question
-    },
-    {
         "text": "What's her favorite coffee place?",
-        "options": ["Starbucks", "Local cafe", "Home-brewed", "Costa Coffee"],
+        "options": ["Starbucks", "Onan", "Home-brewed", "MadMum"],
     },
     {
         "text": "How much would she rate Interstellar?",
@@ -37,10 +33,15 @@ QUESTIONS = [
     },
     {
         "text": "What's her go-to phrase?",
-        "options": ["That's interesting!", "Oh my gosh!", "Let's do this!", "Really?"],
+        "options": [
+            "I don't know",
+            "Those Motherfuckers",
+            "How do you know?",
+            "Really?",
+        ],
     },
     {
-        "text": "Describe her safe place",
+        "text": "Describe her happy place",
         "options": [
             "In a new country's beach",
             "Home",
@@ -49,16 +50,25 @@ QUESTIONS = [
         ],
     },
     {
+        "text": "Share a fond memory that you have with her",
+        "options": [],  # Empty options for bonus question
+    },
+    {
         "text": "How many countries did she visit from 2015 - 2020?",
-        "options": ["5", "8", "12", "15"],
+        "options": ["<=5", ">5 and <=10", ">10 and <=15", "15+"],
     },
     {
         "text": "What's her ideal way to destress?",
         "options": ["Cooking", "Massage", "Sleeping", "Spending time with friends"],
     },
     {
-        "text": "What is her favourite childhood toy?",
-        "options": ["Teddy bear", "Lego set", "Barbie doll", "Nintendo GameBoy"],
+        "text": "What does she say when she doesn't like something?",
+        "options": [
+            "This sucks",
+            "Interesting",
+            "Ew.",
+            "That's nice",
+        ],
     },
     {
         "text": "What is her love language?",
@@ -71,19 +81,40 @@ QUESTIONS = [
     },
     {
         "text": "Her favourite board game?",
-        "options": ["Monopoly", "Scrabble", "Catan", "Ticket to Ride"],
+        "options": ["Monopoly", "Dixit", "Rummikub", "Perudo"],
+    },
+    {
+        "text": "Something nice that you didn't have a chance to tell her",
+        "options": [],  # Empty options for bonus question
     },
     {
         "text": "How many BBQ ribs can she eat?",
-        "options": ["Half a rack", "Full rack", "Two racks", "Three racks"],
+        "options": ["Half a rack", "One full rack", "One and half racks", "Two racks"],
     },
     {
         "text": "Which country was she in before she moved to Belgium?",
-        "options": ["USA", "UK", "South Korea", "Canada"],
+        "options": ["Taiwan", "Australia", "South Korea", "Canada"],
     },
     {
         "text": "Age difference between her and her sister",
-        "options": ["1 year", "2 years", "3 years", "4 years"],
+        "options": ["3 year", "4 years", "5 years", "6 years"],
+    },
+    {
+        "text": "Which drink does she like to drink?",
+        "options": ["Coke", "Lipton Ice Tea", "Coke zero", "Sparkling Water"],
+    },
+    {
+        "text": "What would be her ideal vacation destination?",
+        "options": [
+            "A tropical beach paradise",
+            "An exotic safari adventure",
+            "Skiing",
+            "A remote mountain retreat",
+        ],
+    },
+    {
+        "text": "What's a trait that you admire about her?",
+        "options": [],  # Empty options for bonus question
     },
 ]
 
@@ -337,7 +368,7 @@ def handle_player_select_option(data):
 
     # Check if this answer is correct and update the score
     if game_state.correct_option is not None and option_id == game_state.correct_option:
-        player.score += 1
+        player.score += 10
         db.session.commit()
 
     # Send updated player list to all clients
@@ -380,7 +411,7 @@ def update_player_scores(question_id, correct_option_id):
     ).all()
 
     for answer in correct_answers:
-        answer.player.score += 1
+        answer.player.score += 10
 
     db.session.commit()
 
