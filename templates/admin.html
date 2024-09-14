@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -99,13 +100,12 @@
                 const playersTableBody = $('#players-table tbody');
                 playersTableBody.empty();
                 
-                // Sort players by score in descending order
                 players.sort((a, b) => b.score - a.score);
                 
                 players.forEach(function(player, index) {
                     playersTableBody.append(
                         $('<tr></tr>')
-                            .append($('<td></td>').text(index + 1))  // Rank
+                            .append($('<td></td>').text(index + 1))
                             .append($('<td></td>').text(player.name))
                             .append($('<td></td>').text(player.player_id))
                             .append($('<td></td>').html(`<input type="number" class="score-input" data-player-id="${player.player_id}" value="${player.score}">`))
@@ -114,7 +114,6 @@
                 });
             }
 
-            // Event delegation for dynamically created update buttons
             $('#players-table').on('click', '.update-score', function() {
                 const playerId = $(this).data('player-id');
                 const newScore = $(this).closest('tr').find('.score-input').val();
@@ -130,7 +129,6 @@
                     success: function(response) {
                         if (response.success) {
                             alert('Score updated successfully');
-                            // Refresh the player list
                             $.get('/get_players', function(data) {
                                 updatePlayersList(data);
                             });
@@ -144,68 +142,16 @@
                 });
             }
 
-            // Initial scores update
             $.get('/get_scores', function(data) {
                 updateScoresList(data);
             });
 
-            // Initial players update
             $.get('/get_players', function(data) {
                 updatePlayersList(data);
             });
 
-            // Listen for player updates
             socket.on('update_players', function(data) {
                 updatePlayersList(data);
-            });
-
-            socket.on('new_question', function(data) {
-                $('#question-text').text(data.question_text);
-            });
-
-            $('#reset-game').on('click', function() {
-                $('#reset-confirmation').show();
-                $('#game-controls').hide();
-            });
-
-            $('#confirm-reset').on('click', function() {
-                socket.emit('reset_game');
-                $('#reset-confirmation').hide();
-                $('#game-controls').show();
-            });
-
-            $('#cancel-reset').on('click', function() {
-                $('#reset-confirmation').hide();
-                $('#game-controls').show();
-            });
-
-            $('#previous-question').on('click', function() {
-                socket.emit('previous_question');
-            });
-
-            $('#next-question').on('click', function() {
-                socket.emit('next_question');
-            });
-
-            socket.on('update_scores', function(data) {
-                updateScoresList(data);
-            });
-
-            socket.on('game_over', function() {
-                $('#question-text').text('Game Over!');
-            });
-
-            function updateScoresList(scores) {
-                const scoresList = $('#scores-list');
-                scoresList.empty();
-                scores.forEach(function(player) {
-                    scoresList.append($('<li></li>').text(player.name + ': ' + player.score));
-                });
-            }
-
-            // Initial scores update
-            $.get('/get_scores', function(data) {
-                updateScoresList(data);
             });
         });
     </script>

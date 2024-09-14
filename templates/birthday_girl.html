@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Birthday Girl's Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -45,13 +46,14 @@
                 $('.option-button').prop('disabled', false).css('background-color', '');
             }
 
-            function updateAnswersList(answers) {
-                $('#answers-list').empty();
-                answers.forEach((answer, index) => {
-                    const answerItem = $('<li></li>').text(`${answer.player_name}: Option ${answer.option_id + 1}`);
-                    $('#answers-list').append(answerItem);
-                });
-            }
+            // Remove this unused function
+            // function updateAnswersList(answers) {
+            //     $('#answers-list').empty();
+            //     answers.forEach((answer, index) => {
+            //         const answerItem = $('<li></li>').text(`${answer.player_name}: Option ${answer.option_id + 1}`);
+            //         $('#answers-list').append(answerItem);
+            //     });
+            // }
 
             socket.on('connect', function() {
                 console.log('Connected to server');

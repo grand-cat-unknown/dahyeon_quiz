@@ -5,21 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        .option-button.submitted {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .option-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .option-button.selected {
-            background-color: #008CBA;
-            color: white;
-        }
-    </style>
 </head>
 <body>
     <h1>Quiz Game - Player Portal</h1>
@@ -86,8 +73,6 @@
             });
 
             socket.on('game_reset', function() {
-                localStorage.removeItem('playerName');
-                localStorage.removeItem('playerId');
                 location.reload();
             });
 
