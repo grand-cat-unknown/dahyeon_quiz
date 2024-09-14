@@ -136,9 +136,6 @@
 
             socket.on('update_players', function(data) {
                 const playerData = data.find(player => player.name === playerName);
-                if (playerData) {
-                    $('#result-text').text(`Your score: ${playerData.score}`);
-                }
             });
 
             socket.on('game_over', function() {
