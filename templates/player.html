@@ -9,13 +9,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Quiz Game - Player Portal</h1>
+    <h1>Dahyeon's birthday quiz! - Player Portal</h1>
     <div id="registration-area">
         <input type="text" id="player-name" placeholder="Your Name">
         <button id="register-player">Register</button>
     </div>
     <div id="game-area" style="display: none;">
         <h2>Welcome, <span id="player-name-display"></span>!</h2>
+        <h3>Your Player ID: <span id="player-id-display"></span></h3>
         <div id="question-area">
             <h2 id="question-text">Waiting for the game to start...</h2>
         </div>
@@ -38,10 +39,11 @@
             let playerId = '{{ player_id }}' !== 'None' ? '{{ player_id }}' : '';
             let submittedOptionId = {{ submitted_option_id|default('null', true) }};
 
-            function showGameArea(name) {
+            function showGameArea(name, id) {
                 $('#registration-area').hide();
                 $('#game-area').show();
                 $('#player-name-display').text(name);
+                $('#player-id-display').text(id);
             }
 
             function showRegistrationArea() {
@@ -50,7 +52,7 @@
             }
 
             if (playerName && playerId && playerName !== 'None' && playerId !== 'None') {
-                showGameArea(playerName);
+                showGameArea(playerName, playerId);
                 socket.emit('join', {room: playerId});
                 socket.emit('get_game_state');
             } else {
@@ -67,7 +69,7 @@
             socket.on('player_registered', function(data) {
                 playerName = data.name;
                 playerId = data.player_id;
-                showGameArea(data.name);
+                showGameArea(data.name, data.player_id);
                 history.pushState(null, '', `/player?player_id=${data.player_id}`);
                 socket.emit('join', {room: data.player_id});
             });
@@ -130,9 +132,6 @@
             socket.on('update_scores', function(data) {
                 // Update the player's score if it's in the data
                 const playerScore = data.find(score => score.name === playerName);
-                if (playerScore) {
-                    $('#result-text').text(`Your score: ${playerScore.score}`);
-                }
             });
 
             socket.on('update_players', function(data) {
