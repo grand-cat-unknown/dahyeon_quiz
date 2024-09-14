@@ -82,16 +82,22 @@
 
             function updateQuestion(data) {
                 $('#question-text').text(data.question_text);
-                $('#options-area').show();
-                $('#options-list').empty();
-                submittedOptionId = null;
-                data.options.forEach((option, index) => {
-                    const optionButton = $('<button></button>')
-                        .text(option)
-                        .addClass('option-button')
-                        .data('option-id', index);
-                    $('#options-list').append($('<li></li>').append(optionButton));
-                });
+                if (data.options && data.options.length > 0) {
+                    $('#options-area').show();
+                    $('#options-list').empty();
+                    submittedOptionId = null;
+                    $('.option-button').removeClass('submitted selected');
+                    $('.option-button').prop('disabled', false);
+                    data.options.forEach((option, index) => {
+                        const optionButton = $('<button></button>')
+                            .text(option)
+                            .addClass('option-button')
+                            .data('option-id', index);
+                        $('#options-list').append($('<li></li>').append(optionButton));
+                    });
+                } else {
+                    $('#options-area').hide();
+                }
                 $('#result-text').text('');
             }
 

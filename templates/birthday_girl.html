@@ -32,18 +32,23 @@
                 $('#question-text').text(data.question_text);
                 currentQuestionText = data.question_text;
                 
-                // Update options
-                $('#options-list').empty();
-                data.options.forEach((option, index) => {
-                    const optionButton = $('<button></button>')
-                        .text(option)
-                        .addClass('option-button')
-                        .data('option-id', index);
-                    $('#options-list').append($('<li></li>').append(optionButton));
-                });
+                if (data.options && data.options.length > 0) {
+                    $('#options-area').show();
+                    // Update options
+                    $('#options-list').empty();
+                    data.options.forEach((option, index) => {
+                        const optionButton = $('<button></button>')
+                            .text(option)
+                            .addClass('option-button')
+                            .data('option-id', index);
+                        $('#options-list').append($('<li></li>').append(optionButton));
+                    });
 
-                // Reset option buttons
-                $('.option-button').prop('disabled', false).css('background-color', '');
+                    // Reset option buttons
+                    $('.option-button').prop('disabled', false).css('background-color', '');
+                } else {
+                    $('#options-area').hide();
+                }
             }
 
             // Remove this unused function

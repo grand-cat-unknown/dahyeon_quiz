@@ -66,6 +66,11 @@
             socket.on('new_question', function(data) {
                 $('#question-text').text('Question: ' + data.question_text);
                 $('#correct-answer-text').text('');
+                if (data.options && data.options.length > 0) {
+                    $('#options-area').show();
+                } else {
+                    $('#options-area').hide();
+                }
                 socket.emit('get_players');
             });
 

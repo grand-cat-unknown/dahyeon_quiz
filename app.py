@@ -24,6 +24,10 @@ QUESTIONS = [
         "options": ["14th Sep", "16th Sep", "18th Sep", "20th Sep"],
     },
     {
+        "text": "Share a positive experience you had with Dahyeon",
+        "options": [],  # Empty options for bonus question
+    },
+    {
         "text": "What's her favorite coffee place?",
         "options": ["Starbucks", "Local cafe", "Home-brewed", "Costa Coffee"],
     },
@@ -450,8 +454,7 @@ def handle_next_question():
         game_state.current_question_index += 1
         game_state.correct_option = None
         current_question_data = QUESTIONS[game_state.current_question_index]
-        
-        # Create or update the Question in the database
+
         question = Question.query.filter_by(text=current_question_data["text"]).first()
         if not question:
             question = Question(text=current_question_data["text"])
@@ -465,7 +468,7 @@ def handle_next_question():
             "new_question",
             {
                 "question_text": current_question_data["text"],
-                "options": current_question_data["options"]
+                "options": current_question_data.get("options", []),
             },
             broadcast=True,
         )
